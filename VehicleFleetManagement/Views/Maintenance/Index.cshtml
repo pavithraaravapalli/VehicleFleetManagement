@@ -1,0 +1,233 @@
+@model VehicleFleetManagement.ViewModels.MaintenanceIndexViewModel
+@{
+    ViewData["Title"] = "Maintenance & Servicing";
+    var vehiclesList = ViewData["Vehicles"] as SelectList;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <h2 class="fw-bold mb-1" style="color: #172554;">Vehicle Maintenance & Asset Servicing</h2>
+        <p class="text-muted small mb-0">Total of <strong>@Model.TotalCount</strong> maintenance records logged in the system</p>
+    </div>
+    <a asp-action="Create" class="btn text-white shadow-sm" style="background-color: #172554;">
+        <i class="bi bi-tools me-1"></i> Schedule Maintenance
+    </a>
+</div>
+
+<!-- Proactive Alerts (Upcoming & Overdue) -->
+@if (Model.OverdueAlerts != null && Model.OverdueAlerts.Any())
+{
+    <div class="alert alert-danger shadow-sm border-0 mb-3" role="alert">
+        <div class="d-flex align-items-center mb-2">
+            <i class="bi bi-exclamation-octagon-fill fs-4 me-2"></i>
+            <h6 class="mb-0 fw-bold">Overdue Maintenance Alert (@Model.OverdueAlerts.Count() vehicles require immediate service)</h6>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+            @foreach (var alert in Model.OverdueAlerts)
+            {
+                <span class="badge bg-danger p-2">
+                    <i class="bi bi-truck me-1"></i> @(alert.Vehicle?.RegistrationNumber ?? "Vehicle") - @alert.ServiceType (Due: @alert.NextServiceDate.ToString("d"))
+                </span>
+            }
+        </div>
+    </div>
+}
+
+@if (Model.UpcomingAlerts != null && Model.UpcomingAlerts.Any())
+{
+    <div class="alert alert-warning shadow-sm border-0 mb-4" role="alert">
+        <div class="d-flex align-items-center mb-2">
+            <i class="bi bi-bell-fill fs-4 me-2"></i>
+            <h6 class="mb-0 fw-bold">Maintenance Due Within 7 Days (@Model.UpcomingAlerts.Count() vehicles)</h6>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+            @foreach (var alert in Model.UpcomingAlerts)
+            {
+                <span class="badge bg-warning text-dark p-2">
+                    <i class="bi bi-wrench me-1"></i> @(alert.Vehicle?.RegistrationNumber ?? "Vehicle") - @alert.ServiceType (Due: @alert.NextServiceDate.ToString("d"))
+                </span>
+            }
+        </div>
+    </div>
+}
+
+<!-- Key Metric & Search Card -->
+<div class="card card-custom p-3 mb-4">
+    <form method="get" asp-action="Index" class="row g-2 align-items-end">
+        <div class="col-12 col-md-4">
+            <label class="form-label small fw-semibold text-muted">Search Maintenance</label>
+            <div class="input-group">
+                <span class="input-group-text bg-light text-secondary border-end-0"><i class="bi bi-search"></i></span>
+                <input type="text" name="searchTerm" value="@Model.SearchTerm" class="form-control border-start-0" placeholder="Service, Garage, Description..." />
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 col-md-3">
+            <label class="form-label small fw-semibold text-muted">Filter Vehicle</label>
+            <select name="vehicleId" class="form-select">
+                <option value="">All Fleet Vehicles</option>
+                @if (vehiclesList != null)
+                {
+                    foreach (var item in vehiclesList)
+                    {
+                        <!option value="@item.Value" @(item.Value == Model.SelectedVehicleId?.ToString() ? "selected" : "")>@item.Text</!option>
+                    }
+                }
+            </select>
+        </div>
+        <div class="col-12 col-sm-6 col-md-3">
+            <label class="form-label small fw-semibold text-muted">Service Status</label>
+            <select name="status" class="form-select">
+                <option value="">All Statuses</option>
+                <!option value="Scheduled" @(Model.SelectedStatus == "Scheduled" ? "selected" : "")>Scheduled</!option>
+                <!option value="InProgress" @(Model.SelectedStatus == "InProgress" ? "selected" : "")>In Progress (Vehicle In Shop)</!option>
+                <!option value="Completed" @(Model.SelectedStatus == "Completed" ? "selected" : "")>Completed</!option>
+                <!option value="Overdue" @(Model.SelectedStatus == "Overdue" ? "selected" : "")>Overdue</!option>
+            </select>
+        </div>
+        <div class="col-12 col-md-2 d-flex gap-2">
+            <button type="submit" class="btn btn-primary w-100">
+                <i class="bi bi-funnel me-1"></i> Filter
+            </button>
+            <a asp-action="Index" class="btn btn-outline-secondary" title="Reset Filters">
+                <i class="bi bi-arrow-counterclockwise"></i>
+            </a>
+        </div>
+    </form>
+</div>
+
+<!-- Maintenance Data Table -->
+<div class="card card-custom shadow-sm mb-4">
+    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0 fw-bold" style="color: #172554;">
+            <i class="bi bi-clock-history me-1 text-primary"></i> Service Records History
+        </h5>
+        <div class="badge bg-light text-dark border fs-6">
+            Total Service Expenses: <strong class="text-danger">$@Model.TotalMaintenanceCost.ToString("N2")</strong>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light text-secondary small text-uppercase">
+                    <tr>
+                        <th class="ps-4">Vehicle</th>
+                        <th>Service Type</th>
+                        <th>Garage / Center</th>
+                        <th>Service Date</th>
+                        <th>Next Due</th>
+                        <th>Cost</th>
+                        <th>Status</th>
+                        <th class="text-end pe-4">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Maintenances != null && Model.Maintenances.Any())
+                    {
+                        foreach (var m in Model.Maintenances)
+                        {
+                            <tr>
+                                <td class="ps-4">
+                                    <div class="fw-bold text-primary">@(m.Vehicle?.RegistrationNumber ?? "N/A")</div>
+                                    <div class="small text-muted">@(m.Vehicle?.VehicleName ?? "")</div>
+                                </td>
+                                <td>
+                                    <div class="fw-semibold text-dark">@m.ServiceType</div>
+                                    <div class="small text-muted text-truncate" style="max-width: 200px;">@m.Description</div>
+                                </td>
+                                <td>@m.ServiceCenter</td>
+                                <td>@m.ServiceDate.ToString("d")</td>
+                                <td>
+                                    <span class="@(m.NextServiceDate < DateTime.UtcNow && m.Status != "Completed" ? "text-danger fw-bold" : "")">
+                                        @m.NextServiceDate.ToString("d")
+                                    </span>
+                                </td>
+                                <td class="fw-bold text-dark">$@m.Cost.ToString("N2")</td>
+                                <td>
+                                    @if (m.Status == "Scheduled")
+                                    {
+                                        <span class="badge bg-info text-dark">Scheduled</span>
+                                    }
+                                    else if (m.Status == "InProgress")
+                                    {
+                                        <span class="badge bg-warning text-dark"><i class="bi bi-gear-wide-connected me-1"></i> In Shop</span>
+                                    }
+                                    else if (m.Status == "Completed")
+                                    {
+                                        <span class="badge bg-success"><i class="bi bi-check2-circle me-1"></i> Completed</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger">@m.Status</span>
+                                    }
+                                </td>
+                                <td class="text-end pe-4">
+                                    <div class="btn-group btn-group-sm">
+                                        <a asp-action="Details" asp-route-id="@m.MaintenanceId" class="btn btn-outline-secondary" title="View Details">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a asp-action="Edit" asp-route-id="@m.MaintenanceId" class="btn btn-outline-primary" title="Edit Record">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <a asp-action="Delete" asp-route-id="@m.MaintenanceId" class="btn btn-outline-danger" title="Delete Record">
+                                            <i class="bi bi-trash"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="8" class="text-center py-5 text-muted">
+                                <i class="bi bi-tools display-4 d-block mb-2 text-secondary"></i>
+                                No maintenance events found matching the filter criteria.
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Pagination -->
+@if (Model.TotalPages > 1)
+{
+    <nav aria-label="Maintenance Page Navigation">
+        <ul class="pagination justify-content-center">
+            <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                <a class="page-link" asp-action="Index" 
+                   asp-route-page="@(Model.CurrentPage - 1)" 
+                   asp-route-searchTerm="@Model.SearchTerm" 
+                   asp-route-status="@Model.SelectedStatus" 
+                   asp-route-vehicleId="@Model.SelectedVehicleId">
+                    &laquo; Previous
+                </a>
+            </li>
+
+            @for (int p = 1; p <= Model.TotalPages; p++)
+            {
+                <li class="page-item @(p == Model.CurrentPage ? "active" : "")">
+                    <a class="page-link" asp-action="Index" 
+                       asp-route-page="@p" 
+                       asp-route-searchTerm="@Model.SearchTerm" 
+                       asp-route-status="@Model.SelectedStatus" 
+                       asp-route-vehicleId="@Model.SelectedVehicleId">
+                        @p
+                    </a>
+                </li>
+            }
+
+            <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+                <a class="page-link" asp-action="Index" 
+                   asp-route-page="@(Model.CurrentPage + 1)" 
+                   asp-route-searchTerm="@Model.SearchTerm" 
+                   asp-route-status="@Model.SelectedStatus" 
+                   asp-route-vehicleId="@Model.SelectedVehicleId">
+                    Next &raquo;
+                </a>
+            </li>
+        </ul>
+    </nav>
+}

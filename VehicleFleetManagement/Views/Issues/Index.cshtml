@@ -1,0 +1,171 @@
+@model IEnumerable<VehicleFleetManagement.Models.VehicleIssueReport>
+@{
+    ViewData["Title"] = "Vehicle Fault Reports - FleetFlow Pro";
+    var vehicles = ViewBag.Vehicles as List<VehicleFleetManagement.Models.Vehicle> ?? new List<VehicleFleetManagement.Models.Vehicle>();
+    var selectedStatus = ViewBag.StatusFilter as string;
+    var selectedSeverity = ViewBag.SeverityFilter as string;
+    var selectedVehicleId = ViewBag.VehicleIdFilter as int?;
+}
+
+<div class="container-fluid py-4">
+    <!-- Header & Action Button -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+        <div>
+            <h3 class="fw-bold text-dark mb-1"><i class="bi bi-exclamation-triangle-fill text-danger me-2"></i> Vehicle Fault Reports</h3>
+            <p class="text-muted small mb-0">Track driver-reported mechanical, electrical, and tyre issues across the fleet</p>
+        </div>
+        <div>
+            <a asp-action="Create" class="btn btn-danger rounded-pill px-4 shadow-sm">
+                <i class="bi bi-plus-circle me-1"></i> Report New Fault
+            </a>
+        </div>
+    </div>
+
+    <!-- Filter Card -->
+    <div class="card card-modern p-3 mb-4 shadow-sm border-0">
+        <form method="get" class="row g-2 align-items-center">
+            <div class="col-md-3">
+                <select name="status" class="form-select form-select-sm">
+                    <option value="">All Statuses</option>
+                    <option value="Open" selected="@(selectedStatus == "Open")">Open (Pending Review)</option>
+                    <option value="UnderReview" selected="@(selectedStatus == "UnderReview")">Under Review (In Workshop)</option>
+                    <option value="Resolved" selected="@(selectedStatus == "Resolved")">Resolved</option>
+                    <option value="Closed" selected="@(selectedStatus == "Closed")">Closed</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select name="severity" class="form-select form-select-sm">
+                    <option value="">All Severities</option>
+                    <option value="Low" selected="@(selectedSeverity == "Low")">Low Severity</option>
+                    <option value="Medium" selected="@(selectedSeverity == "Medium")">Medium Severity</option>
+                    <option value="High" selected="@(selectedSeverity == "High")">High Severity</option>
+                    <option value="Critical" selected="@(selectedSeverity == "Critical")">Critical Breakdown</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <select name="vehicleId" class="form-select form-select-sm">
+                    <option value="">All Fleet Vehicles</option>
+                    @foreach (var v in vehicles)
+                    {
+                        <option value="@v.VehicleId" selected="@(selectedVehicleId == v.VehicleId)">@v.VehicleName (@v.RegistrationNumber)</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-2 d-flex gap-2">
+                <button type="submit" class="btn btn-fleet-primary btn-sm rounded-pill w-100">
+                    <i class="bi bi-funnel me-1"></i> Filter
+                </button>
+                <a asp-action="Index" class="btn btn-outline-secondary btn-sm rounded-pill" title="Reset Filters">
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Issues Table -->
+    <div class="card card-modern shadow-sm border-0">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light text-secondary small text-uppercase">
+                        <tr>
+                            <th class="ps-3">ID</th>
+                            <th>Vehicle</th>
+                            <th>Category</th>
+                            <th>Title & Description</th>
+                            <th>Severity</th>
+                            <th>Reported By</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                            <th class="text-end pe-3">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Any())
+                        {
+                            foreach (var item in Model)
+                            {
+                                <tr>
+                                    <td class="ps-3 fw-bold text-dark">#@item.IssueReportId</td>
+                                    <td>
+                                        <div class="fw-semibold small text-dark">@item.Vehicle?.VehicleName</div>
+                                        <span class="badge bg-light text-dark border">@item.Vehicle?.RegistrationNumber</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-light text-secondary border">@item.Category</span>
+                                    </td>
+                                    <td>
+                                        <div class="fw-bold small text-dark">@item.Title</div>
+                                        <small class="text-muted text-truncate d-inline-block" style="max-width: 260px;">@item.Description</small>
+                                        @if (!string.IsNullOrEmpty(item.PhotoUrl))
+                                        {
+                                            <span class="badge bg-info-subtle text-info border ms-1"><i class="bi bi-image"></i> Photo</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (item.Severity == "Critical")
+                                        {
+                                            <span class="badge bg-danger rounded-pill px-3 py-1"><i class="bi bi-exclamation-octagon-fill me-1"></i> Critical</span>
+                                        }
+                                        else if (item.Severity == "High")
+                                        {
+                                            <span class="badge bg-warning text-dark rounded-pill px-3 py-1"><i class="bi bi-exclamation-triangle-fill me-1"></i> High</span>
+                                        }
+                                        else if (item.Severity == "Medium")
+                                        {
+                                            <span class="badge bg-primary rounded-pill px-3 py-1">Medium</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary rounded-pill px-3 py-1">Low</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <div class="small fw-semibold text-dark">@item.Driver?.FullName</div>
+                                        <small class="text-muted">ID #@item.DriverId</small>
+                                    </td>
+                                    <td>
+                                        @if (item.Status == "Resolved")
+                                        {
+                                            <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-1 rounded-pill">Resolved</span>
+                                        }
+                                        else if (item.Status == "UnderReview")
+                                        {
+                                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-1 rounded-pill">Under Review</span>
+                                        }
+                                        else if (item.Status == "Closed")
+                                        {
+                                            <span class="badge bg-secondary-subtle text-secondary px-3 py-1 rounded-pill">Closed</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-1 rounded-pill">Open</span>
+                                        }
+                                    </td>
+                                    <td class="small text-muted">
+                                        @item.ReportDate.ToString("MMM dd, yyyy")
+                                    </td>
+                                    <td class="text-end pe-3">
+                                        <a asp-action="Details" asp-route-id="@item.IssueReportId" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+                                            <i class="bi bi-eye me-1"></i> Details
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="9" class="text-center py-5 text-muted">
+                                    <i class="bi bi-shield-check display-6 d-block mb-2 text-success"></i>
+                                    <h6 class="fw-semibold text-dark">No fault reports match current filters</h6>
+                                    <p class="small text-muted mb-0">All fleet vehicles are currently operating without reported issues.</p>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

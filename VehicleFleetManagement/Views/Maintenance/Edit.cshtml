@@ -1,0 +1,103 @@
+@model VehicleFleetManagement.ViewModels.CreateMaintenanceViewModel
+@{
+    ViewData["Title"] = $"Edit Maintenance #{Model.MaintenanceId}";
+}
+
+<div class="row justify-content-center">
+    <div class="col-12 col-lg-8">
+        <div class="card card-custom p-4 shadow-sm mb-4">
+            <div class="d-flex align-items-center mb-4 pb-3 border-bottom">
+                <div class="bg-primary text-white rounded-circle p-3 me-3 fs-3">
+                    <i class="bi bi-pencil-square"></i>
+                </div>
+                <div>
+                    <h3 class="mb-0 fw-bold" style="color: #172554;">Update Maintenance Record</h3>
+                    <div class="text-muted small">Modify service details, update invoice cost, or finalize status for record #@Model.MaintenanceId</div>
+                </div>
+            </div>
+
+            <form asp-action="Edit" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="MaintenanceId" />
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small" role="alert"></div>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="VehicleId" class="form-label fw-semibold small"></label>
+                        <select asp-for="VehicleId" asp-items="Model.AvailableVehicles" class="form-select">
+                        </select>
+                        <span asp-validation-for="VehicleId" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="ServiceType" class="form-label fw-semibold small"></label>
+                        <select asp-for="ServiceType" class="form-select">
+                            <option value="Routine Service">Routine Service</option>
+                            <option value="Oil & Filter Change">Oil & Filter Change</option>
+                            <option value="Brake System Repair">Brake System Repair</option>
+                            <option value="Engine Diagnostics & Tuning">Engine Diagnostics & Tuning</option>
+                            <option value="Tire Replacement & Alignment">Tire Replacement & Alignment</option>
+                            <option value="Battery & Electrical">Battery & Electrical</option>
+                            <option value="Transmission Service">Transmission Service</option>
+                        </select>
+                        <span asp-validation-for="ServiceType" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-12">
+                        <label asp-for="Description" class="form-label fw-semibold small"></label>
+                        <textarea asp-for="Description" rows="3" class="form-control"></textarea>
+                        <span asp-validation-for="Description" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="ServiceDate" class="form-label fw-semibold small"></label>
+                        <input asp-for="ServiceDate" type="date" class="form-control" />
+                        <span asp-validation-for="ServiceDate" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="NextServiceDate" class="form-label fw-semibold small"></label>
+                        <input asp-for="NextServiceDate" type="date" class="form-control" />
+                        <span asp-validation-for="NextServiceDate" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="Cost" class="form-label fw-semibold small"></label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light text-muted">$</span>
+                            <input asp-for="Cost" type="number" step="0.01" class="form-control" />
+                        </div>
+                        <span asp-validation-for="Cost" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="ServiceCenter" class="form-label fw-semibold small"></label>
+                        <input asp-for="ServiceCenter" class="form-control" />
+                        <span asp-validation-for="ServiceCenter" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-12">
+                        <label asp-for="Status" class="form-label fw-semibold small"></label>
+                        <select asp-for="Status" class="form-select">
+                            <option value="Scheduled">Scheduled</option>
+                            <option value="InProgress">In Progress (Vehicle In Shop)</option>
+                            <option value="Completed">Completed (Releases Vehicle to Available)</option>
+                        </select>
+                        <span asp-validation-for="Status" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <div class="mt-4 pt-3 border-top d-flex justify-content-end gap-2">
+                    <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary px-4">
+                        <i class="bi bi-check-lg me-1"></i> Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

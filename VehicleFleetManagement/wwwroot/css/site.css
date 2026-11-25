@@ -1,0 +1,330 @@
+/* ===================================================================
+   FleetFlow Pro - Modern Commercial SaaS Design System
+   Palette: Modern Navy Blue (#0F172A, #1E293B) | Primary Teal (#0D9488, #14B8A6)
+            Accent Amber (#F59E0B) | Background Slate (#F8FAFC)
+   =================================================================== */
+
+:root {
+    --fleet-navy-dark: #0f172a;
+    --fleet-navy: #1e293b;
+    --fleet-navy-light: #334155;
+    --fleet-teal: #0d9488;
+    --fleet-teal-light: #14b8a6;
+    --fleet-teal-subtle: #ccfbf1;
+    --fleet-amber: #f59e0b;
+    --fleet-bg: #f8fafc;
+    --fleet-card-bg: #ffffff;
+    --fleet-text-main: #1e293b;
+    --fleet-text-muted: #64748b;
+    --fleet-border: #e2e8f0;
+    --fleet-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --fleet-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
+    --fleet-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.03);
+    --fleet-radius: 12px;
+}
+
+body {
+    background-color: var(--fleet-bg);
+    color: var(--fleet-text-main);
+    font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    letter-spacing: -0.011em;
+}
+
+/* ==========================================
+   Navigation Bar & Brand
+   ========================================== */
+.navbar-fleet {
+    background-color: var(--fleet-navy-dark);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+}
+
+.navbar-fleet .navbar-brand {
+    font-weight: 700;
+    font-size: 1.25rem;
+    color: #ffffff;
+    letter-spacing: -0.02em;
+}
+
+.navbar-fleet .nav-link {
+    color: rgba(255, 255, 255, 0.8);
+    font-weight: 500;
+    font-size: 0.925rem;
+    padding: 0.5rem 0.85rem;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.navbar-fleet .nav-link:hover,
+.navbar-fleet .nav-link.active {
+    color: #ffffff;
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
+.brand-badge {
+    background-color: var(--fleet-teal);
+    color: #ffffff;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 3px 6px;
+    border-radius: 6px;
+    letter-spacing: 0.05em;
+    vertical-align: middle;
+}
+
+/* ==========================================
+   Modern SaaS Cards
+   ========================================== */
+.card-modern {
+    background-color: var(--fleet-card-bg);
+    border: 1px solid var(--fleet-border);
+    border-radius: var(--fleet-radius);
+    box-shadow: var(--fleet-shadow);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    overflow: hidden;
+}
+
+.card-modern.card-hover:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--fleet-shadow-lg);
+}
+
+.card-stat {
+    border-radius: var(--fleet-radius);
+    background-color: #ffffff;
+    border: 1px solid var(--fleet-border);
+    padding: 1.25rem;
+    box-shadow: var(--fleet-shadow);
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s ease;
+}
+
+.card-stat:hover {
+    transform: translateY(-2px);
+}
+
+.card-stat .stat-icon-wrapper {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.35rem;
+}
+
+/* ==========================================
+   Modern Buttons
+   ========================================== */
+.btn-fleet-primary {
+    background-color: var(--fleet-teal);
+    border-color: var(--fleet-teal);
+    color: #ffffff;
+    font-weight: 600;
+    border-radius: 8px;
+    padding: 0.55rem 1.25rem;
+    transition: all 0.2s ease;
+}
+
+.btn-fleet-primary:hover, .btn-fleet-primary:focus {
+    background-color: #0b7269;
+    border-color: #0b7269;
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(13, 148, 136, 0.25);
+}
+
+.btn-fleet-navy {
+    background-color: var(--fleet-navy);
+    border-color: var(--fleet-navy);
+    color: #ffffff;
+    font-weight: 600;
+    border-radius: 8px;
+    padding: 0.55rem 1.25rem;
+}
+
+.btn-fleet-navy:hover {
+    background-color: var(--fleet-navy-dark);
+    border-color: var(--fleet-navy-dark);
+    color: #ffffff;
+}
+
+.btn-google {
+    background-color: #ffffff;
+    border: 1px solid #dadce0;
+    color: #3c4043;
+    font-weight: 600;
+    border-radius: 8px;
+    padding: 0.65rem 1.25rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+    width: 100%;
+}
+
+.btn-google:hover {
+    background-color: #f8fafc;
+    border-color: #c4c7c5;
+    box-shadow: 0 1px 3px rgba(60, 64, 67, 0.15);
+    color: #202124;
+}
+
+/* ==========================================
+   Modern Driver Avatar & Badges
+   ========================================== */
+.avatar-circle {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #ffffff;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.avatar-circle-lg {
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid #ffffff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.avatar-placeholder {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--fleet-teal), var(--fleet-navy));
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+.avatar-placeholder-lg {
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--fleet-teal), var(--fleet-navy));
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 2.25rem;
+    border: 4px solid #ffffff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+/* Star Rating Component */
+.star-rating {
+    color: #f59e0b;
+    font-size: 0.95rem;
+}
+
+.star-rating-interactive i {
+    cursor: pointer;
+    font-size: 1.5rem;
+    color: #cbd5e1;
+    transition: color 0.15s ease;
+}
+
+.star-rating-interactive i.active {
+    color: #f59e0b;
+}
+
+/* Password Strength Meter */
+.strength-bar {
+    height: 4px;
+    border-radius: 2px;
+    background-color: #e2e8f0;
+    overflow: hidden;
+    margin-top: 6px;
+}
+
+.strength-bar-fill {
+    height: 100%;
+    width: 0%;
+    transition: width 0.3s ease, background-color 0.3s ease;
+}
+
+.strength-weak { width: 33%; background-color: #ef4444; }
+.strength-medium { width: 66%; background-color: #f59e0b; }
+.strength-strong { width: 100%; background-color: #10b981; }
+
+/* Status Badges */
+.badge-status {
+    padding: 0.35rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.badge-available { background-color: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+.badge-ontrip { background-color: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+.badge-unavailable { background-color: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+.badge-onleave { background-color: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
+.badge-maintenance { background-color: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+
+/* Notification Dropdown */
+.notification-bell-btn {
+    position: relative;
+    padding: 0.45rem 0.75rem;
+    color: rgba(255, 255, 255, 0.85);
+    border-radius: 8px;
+    transition: background-color 0.2s ease;
+}
+
+.notification-bell-btn:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+}
+
+.notification-count-badge {
+    position: absolute;
+    top: 2px;
+    right: 4px;
+    background-color: #ef4444;
+    color: #ffffff;
+    font-size: 0.65rem;
+    font-weight: 700;
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--fleet-navy-dark);
+}
+
+.dropdown-notifications {
+    width: 360px;
+    max-height: 420px;
+    overflow-y: auto;
+}
+
+/* Toast Container */
+.toast-container {
+    position: fixed;
+    top: 1.5rem;
+    right: 1.5rem;
+    z-index: 1080;
+}
+
+/* Footer Styling */
+.footer-fleet {
+    background-color: #ffffff;
+    border-top: 1px solid var(--fleet-border);
+    margin-top: auto;
+    font-size: 0.875rem;
+    color: var(--fleet-text-muted);
+}

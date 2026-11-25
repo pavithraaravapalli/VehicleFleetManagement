@@ -1,0 +1,151 @@
+@using Microsoft.AspNetCore.Identity
+@using VehicleFleetManagement.Models
+@using VehicleFleetManagement.Services.Interfaces
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+@inject INotificationService NotificationService
+
+<ul class="navbar-nav ms-auto align-items-center">
+@if (SignInManager.IsSignedIn(User))
+{
+    var currentUser = await UserManager.GetUserAsync(User);
+    var roles = currentUser != null ? await UserManager.GetRolesAsync(currentUser) : new List<string>();
+    var userRole = roles.FirstOrDefault() ?? "User";
+    var unreadCount = currentUser != null ? await NotificationService.GetUnreadCountAsync(currentUser.Id) : 0;
+    var recentNotifications = currentUser != null ? await NotificationService.GetUserNotificationsAsync(currentUser.Id, 5) : new List<Notification>();
+
+    <!-- Notification Bell Dropdown -->
+    <li class="nav-item dropdown me-2">
+        <a class="nav-link notification-bell-btn d-flex align-items-center" href="#" id="notificationDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" title="Notifications">
+            <i class="bi bi-bell-fill fs-5"></i>
+            @if (unreadCount > 0)
+            {
+                <span class="notification-count-badge" id="navUnreadBadge">@(unreadCount > 9 ? "9+" : unreadCount.ToString())</span>
+            }
+        </a>
+        <div class="dropdown-menu dropdown-menu-end shadow-lg border-0 dropdown-notifications p-0" aria-labelledby="notificationDropdown">
+            <div class="d-flex align-items-center justify-content-between p-3 border-bottom bg-light">
+                <span class="fw-bold small text-dark"><i class="bi bi-bell me-1"></i> Notifications</span>
+                @if (unreadCount > 0)
+                {
+                    <span class="badge bg-danger rounded-pill">@unreadCount Unread</span>
+                }
+            </div>
+            <div class="list-group list-group-flush" style="max-height: 280px; overflow-y: auto;">
+                @if (recentNotifications.Any())
+                {
+                    foreach (var item in recentNotifications)
+                    {
+                        <a href="@(item.ActionUrl ?? "/Notifications")" class="list-group-item list-group-item-action p-3 @(!item.IsRead ? "bg-light bg-opacity-50" : "")">
+                            <div class="d-flex justify-content-between align-items-start mb-1">
+                                <span class="fw-semibold small text-dark">@item.Title</span>
+                                <small class="text-muted" style="font-size: 0.7rem;">@item.CreatedAt.ToString("MMM dd")</small>
+                            </div>
+                            <p class="mb-0 text-muted small text-truncate" style="max-width: 290px;">@item.Message</p>
+                        </a>
+                    }
+                }
+                else
+                {
+                    <div class="p-4 text-center text-muted small">
+                        <i class="bi bi-check2-circle fs-3 text-success d-block mb-1"></i>
+                        You're all caught up!
+                    </div>
+                }
+            </div>
+            <div class="p-2 border-top text-center bg-light">
+                <a asp-controller="Notifications" asp-action="Index" class="btn btn-link btn-sm text-decoration-none fw-semibold small text-primary p-0">
+                    View All Notifications <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+    </li>
+
+    <!-- Role Badge -->
+    <li class="nav-item me-2 d-none d-md-block">
+        @if (userRole == "Admin")
+        {
+            <span class="badge bg-danger rounded-pill px-3 py-1 small"><i class="bi bi-shield-lock-fill me-1"></i> Admin</span>
+        }
+        else if (userRole == "Driver")
+        {
+            <span class="badge bg-primary rounded-pill px-3 py-1 small"><i class="bi bi-steering-wheel me-1"></i> Driver</span>
+        }
+        else
+        {
+            <span class="badge bg-info text-dark rounded-pill px-3 py-1 small"><i class="bi bi-person me-1"></i> Staff</span>
+        }
+    </li>
+
+    <!-- User Profile Dropdown -->
+    <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle text-white d-flex align-items-center py-1 px-2" href="#" id="userMenu" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            @if (!string.IsNullOrEmpty(currentUser?.ProfilePictureUrl))
+            {
+                <img src="@currentUser.ProfilePictureUrl" alt="@currentUser.FullName" class="avatar-circle me-2" style="width: 32px; height: 32px;" />
+            }
+            else
+            {
+                <span class="avatar-placeholder me-2" style="width: 32px; height: 32px; font-size: 0.85rem;">
+                    @((currentUser?.FullName?.Length > 0 ? currentUser.FullName[0].ToString().ToUpper() : "U"))
+                </span>
+            }
+            <span class="fw-semibold d-none d-lg-inline small">@(currentUser?.FullName ?? User.Identity?.Name)</span>
+        </a>
+        <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 py-2" aria-labelledby="userMenu">
+            <li class="px-3 py-2 border-bottom bg-light">
+                <div class="fw-bold small text-dark">@(currentUser?.FullName ?? User.Identity?.Name)</div>
+                <div class="text-muted small" style="font-size: 0.75rem;">@currentUser?.Email</div>
+            </li>
+            @if (userRole == "Driver")
+            {
+                <li>
+                    <a class="dropdown-item py-2" asp-controller="Drivers" asp-action="Profile">
+                        <i class="bi bi-person-badge text-primary me-2"></i> Driver Profile
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item py-2" asp-controller="Dashboard" asp-action="Driver">
+                        <i class="bi bi-speedometer2 text-success me-2"></i> Driver Workspace
+                    </a>
+                </li>
+            }
+            else
+            {
+                <li>
+                    <a class="dropdown-item py-2" asp-controller="Account" asp-action="Profile">
+                        <i class="bi bi-person-circle text-primary me-2"></i> My Account
+                    </a>
+                </li>
+            }
+            <li>
+                <a class="dropdown-item py-2" asp-controller="Notifications" asp-action="Index">
+                    <i class="bi bi-bell text-warning me-2"></i> Notification Center
+                </a>
+            </li>
+            <li><hr class="dropdown-divider"></li>
+            <li>
+                <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="dropdown-item py-2 text-danger">
+                        <i class="bi bi-box-arrow-right me-2"></i> Sign Out
+                    </button>
+                </form>
+            </li>
+        </ul>
+    </li>
+}
+else
+{
+    <li class="nav-item me-2">
+        <a class="nav-link text-white small" asp-controller="Account" asp-action="Login">
+            <i class="bi bi-box-arrow-in-right me-1"></i> Sign In
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="btn btn-fleet-primary btn-sm px-3 rounded-pill" asp-controller="Account" asp-action="Register">
+            <i class="bi bi-person-plus me-1"></i> Sign Up
+        </a>
+    </li>
+}
+</ul>

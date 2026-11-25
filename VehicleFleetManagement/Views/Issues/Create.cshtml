@@ -1,0 +1,107 @@
+@model VehicleFleetManagement.ViewModels.CreateVehicleIssueViewModel
+@{
+    ViewData["Title"] = "Report Vehicle Fault - FleetFlow Pro";
+    var vehicles = ViewBag.Vehicles as List<VehicleFleetManagement.Models.Vehicle> ?? new List<VehicleFleetManagement.Models.Vehicle>();
+}
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-10 col-lg-8">
+            <div class="card card-modern p-4 p-md-5 shadow-sm border-0 rounded-4">
+                
+                <div class="d-flex align-items-center mb-4 pb-3 border-bottom">
+                    <div class="stat-icon-wrapper bg-danger bg-opacity-10 text-danger rounded-3 p-3 me-3">
+                        <i class="bi bi-exclamation-triangle-fill fs-3"></i>
+                    </div>
+                    <div>
+                        <h4 class="fw-bold text-dark mb-1">Report Vehicle Fault / Incident</h4>
+                        <p class="text-muted small mb-0">Submit mechanical, tyre, electrical, or safety issues directly to fleet workshop engineers</p>
+                    </div>
+                </div>
+
+                <form asp-controller="Issues" asp-action="Create" method="post" enctype="multipart/form-data">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="DriverId" />
+                    <input type="hidden" asp-for="TripId" />
+
+                    <div class="row g-3">
+                        <!-- Vehicle Selection -->
+                        <div class="col-12 col-md-6">
+                            <label asp-for="VehicleId" class="form-label small fw-semibold text-dark"></label>
+                            <select asp-for="VehicleId" class="form-select" required>
+                                <option value="">-- Select Vehicle --</option>
+                                @foreach (var v in vehicles)
+                                {
+                                    <option value="@v.VehicleId" selected="@(Model.VehicleId == v.VehicleId)">@v.VehicleName (@v.RegistrationNumber) - @v.Status</option>
+                                }
+                            </select>
+                            <span asp-validation-for="VehicleId" class="text-danger small"></span>
+                        </div>
+
+                        <!-- Fault Category -->
+                        <div class="col-12 col-md-6">
+                            <label asp-for="Category" class="form-label small fw-semibold text-dark"></label>
+                            <select asp-for="Category" class="form-select" required>
+                                <option value="Engine">Engine / Transmission Problem</option>
+                                <option value="Tyres">Tyre Puncture / Wear / Alignment</option>
+                                <option value="Brakes">Brake Pad / ABS Warning</option>
+                                <option value="Battery">Battery / Electrical / Alternator</option>
+                                <option value="Fuel">Fuel System / Leak / Sensor</option>
+                                <option value="Other">Other Operational Issue</option>
+                            </select>
+                            <span asp-validation-for="Category" class="text-danger small"></span>
+                        </div>
+
+                        <!-- Severity -->
+                        <div class="col-12 col-md-6">
+                            <label asp-for="Severity" class="form-label small fw-semibold text-dark"></label>
+                            <select asp-for="Severity" class="form-select" required>
+                                <option value="Low">Low - Cosmetic or Minor</option>
+                                <option value="Medium" selected>Medium - Requires Inspection Soon</option>
+                                <option value="High">High - Impairs Safe Operation</option>
+                                <option value="Critical">Critical - Immediate Breakdown / Stop Driving</option>
+                            </select>
+                            <span asp-validation-for="Severity" class="text-danger small"></span>
+                        </div>
+
+                        <!-- Issue Title -->
+                        <div class="col-12 col-md-6">
+                            <label asp-for="Title" class="form-label small fw-semibold text-dark"></label>
+                            <input asp-for="Title" class="form-control" placeholder="e.g. Engine check light on with rattling noise" required />
+                            <span asp-validation-for="Title" class="text-danger small"></span>
+                        </div>
+
+                        <!-- Description -->
+                        <div class="col-12">
+                            <label asp-for="Description" class="form-label small fw-semibold text-dark"></label>
+                            <textarea asp-for="Description" class="form-control" rows="4" placeholder="Provide detailed symptoms: when does the noise occur, warning lights on dashboard, temperature readings, abnormal smells, etc." required></textarea>
+                            <span asp-validation-for="Description" class="text-danger small"></span>
+                        </div>
+
+                        <!-- Photo Evidence -->
+                        <div class="col-12">
+                            <label asp-for="PhotoEvidence" class="form-label small fw-semibold text-dark"></label>
+                            <input asp-for="PhotoEvidence" type="file" class="form-control" accept=".jpg,.jpeg,.png,.webp" />
+                            <small class="text-muted" style="font-size: 0.75rem;">Optional: attach a photo of the dashboard warning light, damaged tyre, or leak (Max 5MB)</small>
+                            <span asp-validation-for="PhotoEvidence" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-3 border-top d-flex justify-content-between align-items-center">
+                        <a href="javascript:history.back()" class="btn btn-outline-secondary rounded-pill px-4">
+                            <i class="bi bi-arrow-left me-1"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-danger rounded-pill px-4 shadow-sm">
+                            <i class="bi bi-send-fill me-1"></i> Submit Fault Report
+                        </button>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

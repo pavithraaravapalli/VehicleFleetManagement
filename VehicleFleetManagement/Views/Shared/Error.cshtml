@@ -1,0 +1,39 @@
+@model ErrorViewModel
+@{
+    ViewData["Title"] = "System Error - FleetFlow Pro";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-sm border-0 rounded-4 text-center p-4">
+                <div class="card-body">
+                    <div class="mb-4">
+                        <i class="bi bi-exclamation-triangle-fill text-danger display-1"></i>
+                    </div>
+                    <h2 class="h4 fw-bold text-dark mb-2">An Unexpected Error Occurred</h2>
+                    <p class="text-muted mb-4">
+                        Our system encountered an issue while processing your request. The event has been logged for system administrator review.
+                    </p>
+
+                    @if (Model?.ShowRequestId ?? false)
+                    {
+                        <div class="bg-light p-3 rounded-3 text-start mb-4">
+                            <small class="text-muted d-block fw-semibold">Tracking Trace ID:</small>
+                            <code class="text-dark small user-select-all">@Model.RequestId</code>
+                        </div>
+                    }
+
+                    <div class="d-flex justify-content-center gap-3">
+                        <a href="javascript:history.back()" class="btn btn-outline-secondary px-4 rounded-pill">
+                            <i class="bi bi-arrow-left me-1"></i> Go Back
+                        </a>
+                        <a asp-controller="Dashboard" asp-action="Index" class="btn btn-primary px-4 rounded-pill" style="background-color: #172554; border-color: #172554;">
+                            <i class="bi bi-speedometer2 me-1"></i> Return to Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

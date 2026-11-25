@@ -1,0 +1,230 @@
+@model VehicleFleetManagement.Models.Vehicle
+@{
+    ViewData["Title"] = $"{Model.VehicleName} Details";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <div class="d-flex align-items-center gap-2">
+            <h2 class="fw-bold mb-0" style="color: #172554;">@Model.VehicleName</h2>
+            <span class="badge bg-primary fs-6">@Model.RegistrationNumber</span>
+            @if (Model.Status == "Available")
+            {
+                <span class="badge bg-success">Available</span>
+            }
+            else if (Model.Status == "Assigned")
+            {
+                <span class="badge bg-warning text-dark">Assigned</span>
+            }
+            else if (Model.Status == "UnderMaintenance")
+            {
+                <span class="badge bg-danger">Under Maintenance</span>
+            }
+            else
+            {
+                <span class="badge bg-secondary">@Model.Status</span>
+            }
+        </div>
+        <p class="text-muted small mb-0 mt-1">Vehicle Asset Profile, Operating History, and Service Records</p>
+    </div>
+    <div class="d-flex gap-2">
+        @if (User.IsInRole("Admin"))
+        {
+            <a asp-action="Edit" asp-route-id="@Model.VehicleId" class="btn btn-primary">
+                <i class="bi bi-pencil me-1"></i> Edit Vehicle
+            </a>
+        }
+        <a asp-action="Index" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Back to Fleet List
+        </a>
+    </div>
+</div>
+
+<!-- Specifications Snapshot -->
+<div class="row g-3 mb-4">
+    <div class="col-12 col-md-3">
+        <div class="card card-custom p-3">
+            <div class="text-muted small fw-semibold text-uppercase">Current Odometer</div>
+            <div class="fs-4 fw-bold text-dark mt-1">@Model.CurrentOdometer.ToString("N0") km</div>
+            <div class="small text-muted">Vehicle lifecycle mileage</div>
+        </div>
+    </div>
+    <div class="col-12 col-md-3">
+        <div class="card card-custom p-3">
+            <div class="text-muted small fw-semibold text-uppercase">Model & Fuel</div>
+            <div class="fs-4 fw-bold text-dark mt-1">@Model.Model</div>
+            <div class="small text-muted">@Model.FuelType | @Model.VehicleType</div>
+        </div>
+    </div>
+    <div class="col-12 col-md-3">
+        <div class="card card-custom p-3">
+            <div class="text-muted small fw-semibold text-uppercase">Capacity & Year</div>
+            <div class="fs-4 fw-bold text-dark mt-1">@Model.SeatingCapacity Seats</div>
+            <div class="small text-muted">Manufactured in @Model.ManufacturingYear</div>
+        </div>
+    </div>
+    <div class="col-12 col-md-3">
+        <div class="card card-custom p-3">
+            <div class="text-muted small fw-semibold text-uppercase">Insurance Expiry</div>
+            <div class="fs-4 fw-bold mt-1 @(Model.InsuranceExpiryDate < DateTime.UtcNow.AddDays(30) ? "text-danger" : "text-dark")">
+                @Model.InsuranceExpiryDate.ToString("d")
+            </div>
+            <div class="small text-muted">
+                @(Model.InsuranceExpiryDate < DateTime.UtcNow ? "Expired!" : "Valid policy")
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Nav Tabs for Relational History -->
+<ul class="nav nav-pills mb-3" id="vehicleTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active px-4" id="trips-tab" data-bs-toggle="pill" data-bs-target="#trips-content" type="button" role="tab">
+            <i class="bi bi-signpost-2 me-1"></i> Trip History (@(Model.Trips?.Count ?? 0))
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link px-4" id="maintenance-tab" data-bs-toggle="pill" data-bs-target="#maintenance-content" type="button" role="tab">
+            <i class="bi bi-tools me-1"></i> Maintenance Records (@(Model.Maintenances?.Count ?? 0))
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link px-4" id="fuel-tab" data-bs-toggle="pill" data-bs-target="#fuel-content" type="button" role="tab">
+            <i class="bi bi-fuel-pump me-1"></i> Fuel Expense Logs (@(Model.FuelLogs?.Count ?? 0))
+        </button>
+    </li>
+</ul>
+
+<div class="tab-content" id="vehicleTabsContent">
+    <!-- 1. Trips Tab -->
+    <div class="tab-pane fade show active" id="trips-content" role="tabpanel">
+        <div class="card card-custom shadow-sm">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light text-secondary small text-uppercase">
+                            <tr>
+                                <th class="ps-4">Trip #</th>
+                                <th>Driver</th>
+                                <th>Route</th>
+                                <th>Start Date</th>
+                                <th>Distance</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model.Trips != null && Model.Trips.Any())
+                            {
+                                foreach (var t in Model.Trips)
+                                {
+                                    <tr>
+                                        <td class="ps-4 fw-bold">#@t.TripId</td>
+                                        <td>@(t.Driver?.FullName ?? "N/A")</td>
+                                        <td>@t.Source &rarr; @t.Destination</td>
+                                        <td>@t.StartDate.ToString("g")</td>
+                                        <td>@t.Distance.ToString("N0") km</td>
+                                        <td><span class="badge bg-secondary">@t.TripStatus</span></td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="6" class="text-center py-4 text-muted">No historical trips logged for this vehicle.</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. Maintenance Tab -->
+    <div class="tab-pane fade" id="maintenance-content" role="tabpanel">
+        <div class="card card-custom shadow-sm">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light text-secondary small text-uppercase">
+                            <tr>
+                                <th class="ps-4">Service Type</th>
+                                <th>Service Center</th>
+                                <th>Service Date</th>
+                                <th>Next Service Due</th>
+                                <th>Cost</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model.Maintenances != null && Model.Maintenances.Any())
+                            {
+                                foreach (var m in Model.Maintenances)
+                                {
+                                    <tr>
+                                        <td class="ps-4 fw-bold">@m.ServiceType</td>
+                                        <td>@m.ServiceCenter</td>
+                                        <td>@m.ServiceDate.ToString("d")</td>
+                                        <td>@m.NextServiceDate.ToString("d")</td>
+                                        <td>$@m.Cost.ToString("N2")</td>
+                                        <td><span class="badge bg-info text-dark">@m.Status</span></td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="6" class="text-center py-4 text-muted">No maintenance events recorded for this vehicle.</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. Fuel Logs Tab -->
+    <div class="tab-pane fade" id="fuel-content" role="tabpanel">
+        <div class="card card-custom shadow-sm">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light text-secondary small text-uppercase">
+                            <tr>
+                                <th class="ps-4">Date</th>
+                                <th>Station</th>
+                                <th>Quantity (L)</th>
+                                <th>Price/L</th>
+                                <th>Total Cost</th>
+                                <th>Odometer at Refill</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model.FuelLogs != null && Model.FuelLogs.Any())
+                            {
+                                foreach (var f in Model.FuelLogs)
+                                {
+                                    <tr>
+                                        <td class="ps-4">@f.FuelDate.ToString("d")</td>
+                                        <td>@f.FuelStation</td>
+                                        <td>@f.FuelQuantity.ToString("N2") L</td>
+                                        <td>$@f.PricePerLitre.ToString("N2")</td>
+                                        <td class="fw-bold text-success">$@f.TotalCost.ToString("N2")</td>
+                                        <td>@f.OdometerReading.ToString("N0") km</td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="6" class="text-center py-4 text-muted">No fuel purchase logs recorded for this vehicle.</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

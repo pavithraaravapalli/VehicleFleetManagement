@@ -1,0 +1,117 @@
+@model VehicleFleetManagement.Models.Maintenance
+@{
+    ViewData["Title"] = $"Maintenance #{Model.MaintenanceId} Details";
+    bool isOverdue = Model.NextServiceDate < DateTime.UtcNow && Model.Status != "Completed";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <div class="d-flex align-items-center gap-2">
+            <h2 class="fw-bold mb-0" style="color: #172554;">Maintenance Log #@Model.MaintenanceId</h2>
+            <span class="badge bg-primary">@Model.ServiceType</span>
+            @if (Model.Status == "Completed")
+            {
+                <span class="badge bg-success">Completed</span>
+            }
+            else if (Model.Status == "InProgress")
+            {
+                <span class="badge bg-warning text-dark">In Progress (Vehicle In Shop)</span>
+            }
+            else
+            {
+                <span class="badge bg-info text-dark">@Model.Status</span>
+            }
+        </div>
+        <p class="text-muted small mb-0 mt-1">Vehicle Preventive Servicing & Repair Expense Record</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-action="Edit" asp-route-id="@Model.MaintenanceId" class="btn btn-primary">
+            <i class="bi bi-pencil me-1"></i> Edit Record
+        </a>
+        <a asp-action="Index" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Back to Maintenance
+        </a>
+    </div>
+</div>
+
+@if (isOverdue)
+{
+    <div class="alert alert-danger shadow-sm border-0 d-flex align-items-center mb-4" role="alert">
+        <i class="bi bi-exclamation-octagon-fill fs-4 me-2"></i>
+        <div>
+            <strong>Service Overdue:</strong> Next service was due on <strong>@Model.NextServiceDate.ToString("D")</strong>. Please prioritize inspection.
+        </div>
+    </div>
+}
+
+<!-- Metrics Row -->
+<div class="row g-3 mb-4">
+    <div class="col-12 col-md-3">
+        <div class="card card-custom p-3">
+            <div class="text-muted small fw-semibold text-uppercase">Service Cost</div>
+            <div class="fs-4 fw-bold text-danger mt-1">$@Model.Cost.ToString("N2")</div>
+            <div class="small text-muted">Authorized invoice amount</div>
+        </div>
+    </div>
+    <div class="col-12 col-md-3">
+        <div class="card card-custom p-3">
+            <div class="text-muted small fw-semibold text-uppercase">Service Date</div>
+            <div class="fs-4 fw-bold text-dark mt-1">@Model.ServiceDate.ToString("d")</div>
+            <div class="small text-muted">Workshop execution date</div>
+        </div>
+    </div>
+    <div class="col-12 col-md-3">
+        <div class="card card-custom p-3">
+            <div class="text-muted small fw-semibold text-uppercase">Next Due Date</div>
+            <div class="fs-4 fw-bold mt-1 @(isOverdue ? "text-danger" : "text-dark")">
+                @Model.NextServiceDate.ToString("d")
+            </div>
+            <div class="small text-muted">Scheduled recurrence interval</div>
+        </div>
+    </div>
+    <div class="col-12 col-md-3">
+        <div class="card card-custom p-3">
+            <div class="text-muted small fw-semibold text-uppercase">Service Center</div>
+            <div class="fs-5 fw-bold text-dark mt-1 text-truncate">@Model.ServiceCenter</div>
+            <div class="small text-muted">Authorized repair partner</div>
+        </div>
+    </div>
+</div>
+
+<!-- Details & Asset Card -->
+<div class="row g-4">
+    <div class="col-12 col-lg-6">
+        <div class="card card-custom h-100 shadow-sm p-4">
+            <h5 class="fw-bold mb-3" style="color: #172554;">
+                <i class="bi bi-file-text me-2 text-primary"></i> Service Description & Work Order
+            </h5>
+            <p class="text-dark bg-light p-3 rounded" style="white-space: pre-wrap;">@Model.Description</p>
+        </div>
+    </div>
+
+    <div class="col-12 col-lg-6">
+        <div class="card card-custom h-100 shadow-sm p-4">
+            <h5 class="fw-bold mb-3" style="color: #172554;">
+                <i class="bi bi-truck me-2 text-primary"></i> Vehicle Profile
+            </h5>
+            <div class="d-flex align-items-center p-3 border rounded mb-3">
+                <div class="bg-primary bg-opacity-10 text-primary p-3 rounded-circle me-3">
+                    <i class="bi bi-truck fs-3"></i>
+                </div>
+                <div>
+                    <h5 class="fw-bold mb-1">@(Model.Vehicle?.VehicleName ?? "N/A")</h5>
+                    <div class="text-muted small">@Model.Vehicle?.Model | @Model.Vehicle?.FuelType</div>
+                    <span class="badge bg-secondary font-monospace mt-1">@Model.Vehicle?.RegistrationNumber</span>
+                </div>
+            </div>
+
+            <div class="row g-2 small">
+                <div class="col-sm-5 text-muted fw-semibold">Current Odometer:</div>
+                <div class="col-sm-7 fw-bold">@Model.Vehicle?.CurrentOdometer.ToString("N0") km</div>
+
+                <div class="col-sm-5 text-muted fw-semibold">Vehicle Availability:</div>
+                <div class="col-sm-7"><span class="badge bg-light text-dark border">@Model.Vehicle?.Status</span></div>
+            </div>
+        </div>
+    </div>
+</div>

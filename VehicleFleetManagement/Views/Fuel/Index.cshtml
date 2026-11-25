@@ -1,0 +1,226 @@
+@model VehicleFleetManagement.ViewModels.FuelIndexViewModel
+@{
+    ViewData["Title"] = "Fuel Logs & Expenditure";
+    var vehiclesList = ViewData["Vehicles"] as SelectList;
+    bool isAdmin = User.IsInRole("Admin");
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <h2 class="fw-bold mb-1" style="color: #172554;">Fuel Consumption & Refill Logs</h2>
+        <p class="text-muted small mb-0">Total of <strong>@Model.TotalCount</strong> fuel transactions recorded across the fleet</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-action="Create" class="btn text-white shadow-sm" style="background-color: #172554;">
+            <i class="bi bi-fuel-pump-fill me-1"></i> Log Fuel Purchase
+        </a>
+        @if (isAdmin)
+        {
+            <a asp-action="MonthlySummary" class="btn btn-outline-primary">
+                <i class="bi bi-bar-chart-line me-1"></i> Monthly Summary
+            </a>
+        }
+    </div>
+</div>
+
+<!-- Metrics Analytics Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-12 col-md-4">
+        <div class="card card-custom p-3 border-start border-success border-4">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="text-muted small fw-semibold text-uppercase">Total Fuel Expenses</div>
+                    <div class="fs-3 fw-bold text-dark mt-1">$@Model.TotalFuelCost.ToString("N2")</div>
+                </div>
+                <div class="bg-success bg-opacity-10 text-success rounded-circle p-3">
+                    <i class="bi bi-cash-stack fs-3"></i>
+                </div>
+            </div>
+            <div class="small text-muted mt-2">Cumulative fleet fuel budget</div>
+        </div>
+    </div>
+    <div class="col-12 col-md-4">
+        <div class="card card-custom p-3 border-start border-primary border-4">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="text-muted small fw-semibold text-uppercase">Total Volume Consumed</div>
+                    <div class="fs-3 fw-bold text-dark mt-1">@Model.TotalLitres.ToString("N1") L</div>
+                </div>
+                <div class="bg-primary bg-opacity-10 text-primary rounded-circle p-3">
+                    <i class="bi bi-droplet-half fs-3"></i>
+                </div>
+            </div>
+            <div class="small text-muted mt-2">Total fuel pumped into vehicles</div>
+        </div>
+    </div>
+    <div class="col-12 col-md-4">
+        <div class="card card-custom p-3 border-start border-info border-4">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="text-muted small fw-semibold text-uppercase">Average Fuel Price</div>
+                    <div class="fs-3 fw-bold text-dark mt-1">$@Model.AveragePricePerLitre.ToString("N2") / L</div>
+                </div>
+                <div class="bg-info bg-opacity-10 text-info rounded-circle p-3">
+                    <i class="bi bi-graph-up fs-3"></i>
+                </div>
+            </div>
+            <div class="small text-muted mt-2">Weighted average purchase rate</div>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Bar -->
+<div class="card card-custom p-3 mb-4">
+    <form method="get" asp-action="Index" class="row g-2 align-items-end">
+        <div class="col-12 col-md-4">
+            <label class="form-label small fw-semibold text-muted">Vehicle</label>
+            <select name="vehicleId" class="form-select">
+                <option value="">All Fleet Vehicles</option>
+                @if (vehiclesList != null)
+                {
+                    foreach (var item in vehiclesList)
+                    {
+                        <!option value="@item.Value" @(item.Value == Model.SelectedVehicleId?.ToString() ? "selected" : "")>@item.Text</!option>
+                    }
+                }
+            </select>
+        </div>
+        <div class="col-12 col-sm-6 col-md-3">
+            <label class="form-label small fw-semibold text-muted">From Date</label>
+            <input type="date" name="fromDate" value="@Model.FromDate?.ToString("yyyy-MM-dd")" class="form-control" />
+        </div>
+        <div class="col-12 col-sm-6 col-md-3">
+            <label class="form-label small fw-semibold text-muted">To Date</label>
+            <input type="date" name="toDate" value="@Model.ToDate?.ToString("yyyy-MM-dd")" class="form-control" />
+        </div>
+        <div class="col-12 col-md-2 d-flex gap-2">
+            <button type="submit" class="btn btn-primary w-100">
+                <i class="bi bi-funnel me-1"></i> Filter
+            </button>
+            <a asp-action="Index" class="btn btn-outline-secondary" title="Reset Filters">
+                <i class="bi bi-arrow-counterclockwise"></i>
+            </a>
+        </div>
+    </form>
+</div>
+
+<!-- Fuel Data Table -->
+<div class="card card-custom shadow-sm mb-4">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light text-secondary small text-uppercase">
+                    <tr>
+                        <th class="ps-4">Vehicle</th>
+                        <th>Associated Trip</th>
+                        <th>Purchase Date</th>
+                        <th>Fuel Station</th>
+                        <th>Quantity (Litres)</th>
+                        <th>Price/L</th>
+                        <th>Total Cost</th>
+                        <th>Odometer at Refill</th>
+                        <th class="text-end pe-4">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.FuelLogs != null && Model.FuelLogs.Any())
+                    {
+                        foreach (var f in Model.FuelLogs)
+                        {
+                            <tr>
+                                <td class="ps-4">
+                                    <div class="fw-bold text-primary">@(f.Vehicle?.RegistrationNumber ?? "N/A")</div>
+                                    <div class="small text-muted">@(f.Vehicle?.VehicleName ?? "")</div>
+                                </td>
+                                <td>
+                                    @if (f.TripId.HasValue)
+                                    {
+                                        <a asp-controller="Trips" asp-action="Details" asp-route-id="@f.TripId.Value" class="badge bg-light text-primary border text-decoration-none">
+                                            Trip #@f.TripId.Value
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted small">General Fleet</span>
+                                    }
+                                </td>
+                                <td>@f.FuelDate.ToString("d")</td>
+                                <td>@f.FuelStation</td>
+                                <td><strong>@f.FuelQuantity.ToString("N2")</strong> L</td>
+                                <td>$@f.PricePerLitre.ToString("N2")</td>
+                                <td class="fw-bold text-success">$@f.TotalCost.ToString("N2")</td>
+                                <td>@f.OdometerReading.ToString("N0") km</td>
+                                <td class="text-end pe-4">
+                                    <div class="btn-group btn-group-sm">
+                                        <a asp-action="Details" asp-route-id="@f.FuelLogId" class="btn btn-outline-secondary" title="View Details">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        @if (isAdmin)
+                                        {
+                                            <a asp-action="Edit" asp-route-id="@f.FuelLogId" class="btn btn-outline-primary" title="Edit Log">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                            <a asp-action="Delete" asp-route-id="@f.FuelLogId" class="btn btn-outline-danger" title="Delete Log">
+                                                <i class="bi bi-trash"></i>
+                                            </a>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="9" class="text-center py-5 text-muted">
+                                <i class="bi bi-fuel-pump display-4 d-block mb-2 text-secondary"></i>
+                                No fuel refill records found for the selected filter criteria.
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Pagination -->
+@if (Model.TotalPages > 1)
+{
+    <nav aria-label="Fuel Page Navigation">
+        <ul class="pagination justify-content-center">
+            <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                <a class="page-link" asp-action="Index" 
+                   asp-route-page="@(Model.CurrentPage - 1)" 
+                   asp-route-vehicleId="@Model.SelectedVehicleId" 
+                   asp-route-fromDate="@Model.FromDate?.ToString("yyyy-MM-dd")" 
+                   asp-route-toDate="@Model.ToDate?.ToString("yyyy-MM-dd")">
+                    &laquo; Previous
+                </a>
+            </li>
+
+            @for (int p = 1; p <= Model.TotalPages; p++)
+            {
+                <li class="page-item @(p == Model.CurrentPage ? "active" : "")">
+                    <a class="page-link" asp-action="Index" 
+                       asp-route-page="@p" 
+                       asp-route-vehicleId="@Model.SelectedVehicleId" 
+                       asp-route-fromDate="@Model.FromDate?.ToString("yyyy-MM-dd")" 
+                       asp-route-toDate="@Model.ToDate?.ToString("yyyy-MM-dd")">
+                        @p
+                    </a>
+                </li>
+            }
+
+            <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+                <a class="page-link" asp-action="Index" 
+                   asp-route-page="@(Model.CurrentPage + 1)" 
+                   asp-route-vehicleId="@Model.SelectedVehicleId" 
+                   asp-route-fromDate="@Model.FromDate?.ToString("yyyy-MM-dd")" 
+                   asp-route-toDate="@Model.ToDate?.ToString("yyyy-MM-dd")">
+                    Next &raquo;
+                </a>
+            </li>
+        </ul>
+    </nav>
+}

@@ -1,0 +1,127 @@
+@model VehicleFleetManagement.Models.Vehicle
+@{
+    ViewData["Title"] = "Add New Vehicle";
+}
+
+<div class="row justify-content-center">
+    <div class="col-12 col-lg-10">
+        <div class="card card-custom p-4 shadow-sm mb-4">
+            <div class="d-flex align-items-center mb-4 pb-3 border-bottom">
+                <div class="bg-primary text-white rounded-circle p-3 me-3 fs-3">
+                    <i class="bi bi-truck"></i>
+                </div>
+                <div>
+                    <h3 class="mb-0 fw-bold" style="color: #172554;">Register New Fleet Vehicle</h3>
+                    <div class="text-muted small">Enter vehicle specifications and compliance details for fleet tracking</div>
+                </div>
+            </div>
+
+            <form asp-action="Create" method="post">
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small" role="alert"></div>
+
+                <div class="row g-3">
+                    <!-- Column 1 -->
+                    <div class="col-md-6">
+                        <label asp-for="RegistrationNumber" class="form-label fw-semibold small"></label>
+                        <input asp-for="RegistrationNumber" class="form-control text-uppercase" placeholder="e.g. FL-04-GH-4004" autofocus />
+                        <span asp-validation-for="RegistrationNumber" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="VehicleName" class="form-label fw-semibold small"></label>
+                        <input asp-for="VehicleName" class="form-control" placeholder="e.g. Toyota Hilux 4x4" />
+                        <span asp-validation-for="VehicleName" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="Model" class="form-label fw-semibold small"></label>
+                        <input asp-for="Model" class="form-control" placeholder="e.g. 2.8L Turbo Diesel" />
+                        <span asp-validation-for="Model" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="VehicleType" class="form-label fw-semibold small"></label>
+                        <select asp-for="VehicleType" class="form-select">
+                            <option value="">-- Select Type --</option>
+                            <option value="Sedan">Sedan</option>
+                            <option value="SUV">SUV</option>
+                            <option value="Truck">Truck</option>
+                            <option value="Van">Van</option>
+                            <option value="Bus">Bus</option>
+                        </select>
+                        <span asp-validation-for="VehicleType" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label asp-for="FuelType" class="form-label fw-semibold small"></label>
+                        <select asp-for="FuelType" class="form-select">
+                            <option value="">-- Select Fuel --</option>
+                            <option value="Petrol">Petrol</option>
+                            <option value="Diesel">Diesel</option>
+                            <option value="Electric">Electric</option>
+                            <option value="Hybrid">Hybrid</option>
+                            <option value="CNG">CNG</option>
+                        </select>
+                        <span asp-validation-for="FuelType" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label asp-for="ManufacturingYear" class="form-label fw-semibold small"></label>
+                        <input asp-for="ManufacturingYear" type="number" class="form-control" />
+                        <span asp-validation-for="ManufacturingYear" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label asp-for="SeatingCapacity" class="form-label fw-semibold small"></label>
+                        <input asp-for="SeatingCapacity" type="number" class="form-control" />
+                        <span asp-validation-for="SeatingCapacity" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label asp-for="CurrentOdometer" class="form-label fw-semibold small"></label>
+                        <div class="input-group">
+                            <input asp-for="CurrentOdometer" type="number" step="0.01" class="form-control" />
+                            <span class="input-group-text bg-light text-muted">km</span>
+                        </div>
+                        <span asp-validation-for="CurrentOdometer" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label asp-for="RegistrationDate" class="form-label fw-semibold small"></label>
+                        <input asp-for="RegistrationDate" type="date" class="form-control" />
+                        <span asp-validation-for="RegistrationDate" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label asp-for="InsuranceExpiryDate" class="form-label fw-semibold small"></label>
+                        <input asp-for="InsuranceExpiryDate" type="date" class="form-control" />
+                        <span asp-validation-for="InsuranceExpiryDate" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-12">
+                        <label asp-for="Status" class="form-label fw-semibold small"></label>
+                        <select asp-for="Status" class="form-select">
+                            <option value="Available">Available</option>
+                            <option value="Assigned">Assigned</option>
+                            <option value="UnderMaintenance">Under Maintenance</option>
+                            <option value="Inactive">Inactive</option>
+                        </select>
+                        <span asp-validation-for="Status" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <div class="mt-4 pt-3 border-top d-flex justify-content-end gap-2">
+                    <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary px-4">
+                        <i class="bi bi-save me-1"></i> Register Vehicle
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,0 +1,200 @@
+@model IEnumerable<VehicleFleetManagement.Models.Vehicle>
+@{
+    ViewData["Title"] = "Vehicle Inventory";
+    var vehicleTypes = ViewData["VehicleTypes"] as SelectList;
+    int currentPage = ViewBag.CurrentPage ?? 1;
+    int totalPages = ViewBag.TotalPages ?? 1;
+    int totalCount = ViewBag.TotalCount ?? 0;
+    string searchTerm = ViewBag.SearchTerm as string ?? "";
+    string selectedType = ViewBag.SelectedType as string ?? "";
+    string selectedStatus = ViewBag.SelectedStatus as string ?? "";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <h2 class="fw-bold mb-1" style="color: #172554;">Fleet Vehicle Registry</h2>
+        <p class="text-muted small mb-0">Total of <strong>@totalCount</strong> vehicles registered in the operational database</p>
+    </div>
+    @if (User.IsInRole("Admin"))
+    {
+        <a asp-action="Create" class="btn text-white shadow-sm" style="background-color: #172554;">
+            <i class="bi bi-plus-circle me-1"></i> Register New Vehicle
+        </a>
+    }
+</div>
+
+<!-- Search & Filtering Card -->
+<div class="card card-custom p-3 mb-4">
+    <form method="get" asp-action="Index" class="row g-2 align-items-end">
+        <div class="col-12 col-md-4">
+            <label class="form-label small fw-semibold text-muted">Search Vehicle</label>
+            <div class="input-group">
+                <span class="input-group-text bg-light text-secondary border-end-0"><i class="bi bi-search"></i></span>
+                <input type="text" name="searchTerm" value="@searchTerm" class="form-control border-start-0" placeholder="Registration, Name, or Model..." />
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 col-md-3">
+            <label class="form-label small fw-semibold text-muted">Vehicle Type</label>
+            <select name="vehicleType" class="form-select">
+                <option value="">All Types</option>
+                @if (vehicleTypes != null)
+                {
+                    foreach (var item in vehicleTypes)
+                    {
+                        <!option value="@item.Value" @(item.Value == selectedType ? "selected" : "")>@item.Text</!option>
+                    }
+                }
+            </select>
+        </div>
+        <div class="col-12 col-sm-6 col-md-3">
+            <label class="form-label small fw-semibold text-muted">Availability Status</label>
+            <select name="status" class="form-select">
+                <option value="">All Statuses</option>
+                <!option value="Available" @(selectedStatus == "Available" ? "selected" : "")>Available</!option>
+                <!option value="Assigned" @(selectedStatus == "Assigned" ? "selected" : "")>Assigned (On Trip)</!option>
+                <!option value="UnderMaintenance" @(selectedStatus == "UnderMaintenance" ? "selected" : "")>Under Maintenance</!option>
+                <!option value="Inactive" @(selectedStatus == "Inactive" ? "selected" : "")>Inactive</!option>
+            </select>
+        </div>
+        <div class="col-12 col-md-2 d-flex gap-2">
+            <button type="submit" class="btn btn-primary w-100">
+                <i class="bi bi-funnel me-1"></i> Filter
+            </button>
+            <a asp-action="Index" class="btn btn-outline-secondary" title="Reset Filters">
+                <i class="bi bi-arrow-counterclockwise"></i>
+            </a>
+        </div>
+    </form>
+</div>
+
+<!-- Vehicles Data Table -->
+<div class="card card-custom shadow-sm mb-4">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light text-secondary small text-uppercase">
+                    <tr>
+                        <th class="ps-4">Registration #</th>
+                        <th>Make & Model</th>
+                        <th>Type / Fuel</th>
+                        <th>Year</th>
+                        <th>Capacity</th>
+                        <th>Odometer</th>
+                        <th>Status</th>
+                        <th class="text-end pe-4">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model != null && Model.Any())
+                    {
+                        foreach (var v in Model)
+                        {
+                            <tr>
+                                <td class="ps-4">
+                                    <a asp-action="Details" asp-route-id="@v.VehicleId" class="fw-bold text-decoration-none text-primary">
+                                        @v.RegistrationNumber
+                                    </a>
+                                </td>
+                                <td>
+                                    <div class="fw-semibold text-dark">@v.VehicleName</div>
+                                    <div class="text-muted small">@v.Model</div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-light text-dark border">@v.VehicleType</span>
+                                    <span class="badge bg-light text-secondary border">@v.FuelType</span>
+                                </td>
+                                <td>@v.ManufacturingYear</td>
+                                <td>@v.SeatingCapacity Seats</td>
+                                <td>@v.CurrentOdometer.ToString("N0") km</td>
+                                <td>
+                                    @if (v.Status == "Available")
+                                    {
+                                        <span class="badge bg-success px-2 py-1"><i class="bi bi-check-circle me-1"></i> Available</span>
+                                    }
+                                    else if (v.Status == "Assigned")
+                                    {
+                                        <span class="badge bg-warning text-dark px-2 py-1"><i class="bi bi-clock-history me-1"></i> Assigned</span>
+                                    }
+                                    else if (v.Status == "UnderMaintenance")
+                                    {
+                                        <span class="badge bg-danger px-2 py-1"><i class="bi bi-wrench me-1"></i> Maintenance</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary px-2 py-1">@v.Status</span>
+                                    }
+                                </td>
+                                <td class="text-end pe-4">
+                                    <div class="btn-group btn-group-sm">
+                                        <a asp-action="Details" asp-route-id="@v.VehicleId" class="btn btn-outline-secondary" title="View History & Specs">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        @if (User.IsInRole("Admin"))
+                                        {
+                                            <a asp-action="Edit" asp-route-id="@v.VehicleId" class="btn btn-outline-primary" title="Edit Vehicle">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                            <a asp-action="Delete" asp-route-id="@v.VehicleId" class="btn btn-outline-danger" title="Delete Vehicle">
+                                                <i class="bi bi-trash"></i>
+                                            </a>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="8" class="text-center py-5 text-muted">
+                                <i class="bi bi-truck display-4 d-block mb-2 text-secondary"></i>
+                                No vehicles found matching the selected filter criteria.
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Pagination Controls -->
+@if (totalPages > 1)
+{
+    <nav aria-label="Vehicle Page Navigation">
+        <ul class="pagination justify-content-center">
+            <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                <a class="page-link" asp-action="Index" 
+                   asp-route-page="@(currentPage - 1)" 
+                   asp-route-searchTerm="@searchTerm" 
+                   asp-route-vehicleType="@selectedType" 
+                   asp-route-status="@selectedStatus">
+                    &laquo; Previous
+                </a>
+            </li>
+
+            @for (int p = 1; p <= totalPages; p++)
+            {
+                <li class="page-item @(p == currentPage ? "active" : "")">
+                    <a class="page-link" asp-action="Index" 
+                       asp-route-page="@p" 
+                       asp-route-searchTerm="@searchTerm" 
+                       asp-route-vehicleType="@selectedType" 
+                       asp-route-status="@selectedStatus">
+                        @p
+                    </a>
+                </li>
+            }
+
+            <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
+                <a class="page-link" asp-action="Index" 
+                   asp-route-page="@(currentPage + 1)" 
+                   asp-route-searchTerm="@searchTerm" 
+                   asp-route-vehicleType="@selectedType" 
+                   asp-route-status="@selectedStatus">
+                    Next &raquo;
+                </a>
+            </li>
+        </ul>
+    </nav>
+}

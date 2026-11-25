@@ -1,0 +1,195 @@
+@model VehicleFleetManagement.Models.VehicleIssueReport
+@{
+    ViewData["Title"] = $"Fault Report #{Model.IssueReportId} - FleetFlow Pro";
+    var isAdmin = User.IsInRole("Admin");
+}
+
+<div class="container py-4">
+    <!-- Breadcrumb & Navigation -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a asp-controller="Dashboard" asp-action="Index">Dashboard</a></li>
+                <li class="breadcrumb-item"><a asp-action="Index">Fault Reports</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Report #@Model.IssueReportId</li>
+            </ol>
+        </nav>
+        <div>
+            <a asp-action="Index" class="btn btn-outline-secondary btn-sm rounded-pill">
+                <i class="bi bi-arrow-left me-1"></i> Back to Faults
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Main Fault Report Details -->
+        <div class="col-12 col-lg-8">
+            <div class="card card-modern p-4 shadow-sm border-0 mb-4">
+                <div class="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-2">
+                    <div>
+                        <span class="badge bg-secondary-subtle text-secondary mb-2">Category: @Model.Category</span>
+                        <h3 class="fw-bold text-dark mb-1">@Model.Title</h3>
+                        <small class="text-muted"><i class="bi bi-calendar3 me-1"></i> Reported on @Model.ReportDate.ToString("MMMM dd, yyyy HH:mm")</small>
+                    </div>
+
+                    <div>
+                        @if (Model.Severity == "Critical")
+                        {
+                            <span class="badge bg-danger rounded-pill px-3 py-2 fs-6"><i class="bi bi-exclamation-octagon-fill me-1"></i> Critical Breakdown</span>
+                        }
+                        else if (Model.Severity == "High")
+                        {
+                            <span class="badge bg-warning text-dark rounded-pill px-3 py-2 fs-6"><i class="bi bi-exclamation-triangle-fill me-1"></i> High Severity</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-primary rounded-pill px-3 py-2 fs-6">@Model.Severity Severity</span>
+                        }
+                    </div>
+                </div>
+
+                <div class="p-3 bg-light rounded-3 mb-4">
+                    <label class="form-label small fw-semibold text-muted d-block">Description of Fault Symptoms:</label>
+                    <p class="mb-0 text-dark" style="white-space: pre-line;">@Model.Description</p>
+                </div>
+
+                <!-- Attached Photographic Evidence -->
+                @if (!string.IsNullOrEmpty(Model.PhotoUrl))
+                {
+                    <div class="mb-4">
+                        <label class="form-label small fw-semibold text-muted d-block">Photographic Evidence:</label>
+                        <div class="border rounded-3 p-2 bg-light d-inline-block">
+                            <a href="@Model.PhotoUrl" target="_blank" title="Click to view full image">
+                                <img src="@Model.PhotoUrl" alt="Fault Evidence" class="img-fluid rounded" style="max-height: 320px; object-fit: contain;" />
+                            </a>
+                            <small class="text-muted d-block mt-1 text-center"><i class="bi bi-zoom-in me-1"></i> Click to open full resolution</small>
+                        </div>
+                    </div>
+                }
+
+                <!-- Resolution Notes -->
+                @if (!string.IsNullOrEmpty(Model.ResolutionNotes))
+                {
+                    <div class="p-3 bg-success bg-opacity-10 border border-success-subtle rounded-3 mb-3">
+                        <div class="fw-bold text-success small mb-1"><i class="bi bi-check2-circle me-1"></i> Workshop Resolution Notes:</div>
+                        <p class="mb-0 text-dark small">@Model.ResolutionNotes</p>
+                        @if (Model.ResolvedAt.HasValue)
+                        {
+                            <small class="text-muted d-block mt-2">Resolved on @Model.ResolvedAt.Value.ToString("MMM dd, yyyy HH:mm")</small>
+                        }
+                    </div>
+                }
+
+                <!-- Admin Status Update Form -->
+                @if (isAdmin)
+                {
+                    <div class="mt-4 pt-3 border-top">
+                        <h6 class="fw-bold text-dark mb-3"><i class="bi bi-wrench me-1 text-primary"></i> Workshop Admin Status Update</h6>
+                        <form asp-action="UpdateStatus" method="post">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="issueReportId" value="@Model.IssueReportId" />
+
+                            <div class="row g-3">
+                                <div class="col-md-5">
+                                    <label class="form-label small fw-semibold text-dark">Status</label>
+                                    <select name="status" class="form-select" required>
+                                        <option value="Open" selected="@(Model.Status == "Open")">Open (Pending Inspection)</option>
+                                        <option value="UnderReview" selected="@(Model.Status == "UnderReview")">Under Review (In Workshop)</option>
+                                        <option value="Resolved" selected="@(Model.Status == "Resolved")">Resolved (Repairs Finished)</option>
+                                        <option value="Closed" selected="@(Model.Status == "Closed")">Closed</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-7">
+                                    <label class="form-label small fw-semibold text-dark">Resolution Notes / Action Taken</label>
+                                    <input type="text" name="resolutionNotes" class="form-control" value="@Model.ResolutionNotes" placeholder="e.g. Replaced front brake pads and flushed hydraulic lines" />
+                                </div>
+                                <div class="col-12 text-end">
+                                    <button type="submit" class="btn btn-fleet-primary rounded-pill px-4">
+                                        <i class="bi bi-arrow-repeat me-1"></i> Update Issue Status
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Right Side: Associated Vehicle & Reporting Driver Card -->
+        <div class="col-12 col-lg-4">
+            
+            <!-- Vehicle Summary -->
+            <div class="card card-modern p-4 shadow-sm border-0 mb-4">
+                <h6 class="fw-bold text-dark mb-3"><i class="bi bi-truck text-primary me-2"></i> Vehicle Details</h6>
+                <div class="p-3 bg-light rounded-3 text-center mb-3">
+                    <h5 class="fw-bold text-dark mb-0">@Model.Vehicle?.VehicleName</h5>
+                    <span class="badge bg-navy text-white px-3 py-1 mt-1" style="background-color: var(--fleet-navy);">@Model.Vehicle?.RegistrationNumber</span>
+                </div>
+                <div class="small text-muted">
+                    <div class="d-flex justify-content-between py-1 border-bottom">
+                        <span>Model:</span>
+                        <strong class="text-dark">@Model.Vehicle?.Model</strong>
+                    </div>
+                    <div class="d-flex justify-content-between py-1 border-bottom">
+                        <span>Vehicle Status:</span>
+                        <span class="badge bg-success-subtle text-success">@Model.Vehicle?.Status</span>
+                    </div>
+                    <div class="d-flex justify-content-between py-1 border-bottom">
+                        <span>Current Odometer:</span>
+                        <strong class="text-dark">@Model.Vehicle?.CurrentOdometer.ToString("N0") km</strong>
+                    </div>
+                    <div class="d-flex justify-content-between py-1">
+                        <span>Fuel Type:</span>
+                        <strong class="text-dark">@Model.Vehicle?.FuelType</strong>
+                    </div>
+                </div>
+                <div class="mt-3 pt-2">
+                    <a asp-controller="Vehicles" asp-action="Details" asp-route-id="@Model.VehicleId" class="btn btn-outline-secondary btn-sm w-100 rounded-pill">
+                        <i class="bi bi-box-arrow-up-right me-1"></i> View Vehicle Profile
+                    </a>
+                </div>
+            </div>
+
+            <!-- Reporting Driver Summary -->
+            <div class="card card-modern p-4 shadow-sm border-0">
+                <h6 class="fw-bold text-dark mb-3"><i class="bi bi-person-badge text-primary me-2"></i> Reporting Driver</h6>
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    @if (!string.IsNullOrEmpty(Model.Driver?.ProfilePictureUrl))
+                    {
+                        <img src="@Model.Driver.ProfilePictureUrl" alt="@Model.Driver.FullName" class="avatar-circle" />
+                    }
+                    else
+                    {
+                        <div class="avatar-placeholder" style="width: 44px; height: 44px;">
+                            @((Model.Driver?.FullName?.Length > 0 ? Model.Driver.FullName[0].ToString().ToUpper() : "D"))
+                        </div>
+                    }
+                    <div>
+                        <h6 class="fw-bold text-dark mb-0">@Model.Driver?.FullName</h6>
+                        <small class="text-muted">License: @Model.Driver?.LicenseNumber</small>
+                    </div>
+                </div>
+                <div class="small text-muted">
+                    <div class="d-flex justify-content-between py-1 border-bottom">
+                        <span>Phone:</span>
+                        <strong class="text-dark">@Model.Driver?.PhoneNumber</strong>
+                    </div>
+                    <div class="d-flex justify-content-between py-1 border-bottom">
+                        <span>Driver Rating:</span>
+                        <span class="text-warning fw-bold"><i class="bi bi-star-fill"></i> @(Model.Driver?.Rating.ToString("N1") ?? "5.0")</span>
+                    </div>
+                    <div class="d-flex justify-content-between py-1">
+                        <span>Driver Availability:</span>
+                        <span class="badge bg-light text-dark border">@Model.Driver?.AvailabilityStatus</span>
+                    </div>
+                </div>
+                <div class="mt-3 pt-2">
+                    <a asp-controller="Drivers" asp-action="Profile" asp-route-id="@Model.DriverId" class="btn btn-outline-primary btn-sm w-100 rounded-pill">
+                        <i class="bi bi-person-circle me-1"></i> View Driver Profile
+                    </a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>

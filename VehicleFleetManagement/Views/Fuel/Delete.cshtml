@@ -1,0 +1,81 @@
+@model VehicleFleetManagement.Models.FuelLog
+@{
+    ViewData["Title"] = $"Delete Fuel Record #{Model.FuelLogId}";
+}
+
+<div class="row justify-content-center">
+    <div class="col-12 col-lg-7">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <a asp-action="Index" class="text-decoration-none text-muted small">
+                    <i class="bi bi-arrow-left me-1"></i> Back to Fuel Logs
+                </a>
+                <h2 class="fw-bold mb-0 mt-1 text-danger">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>Delete Fuel Record
+                </h2>
+                <p class="text-muted small mb-0">Are you sure you want to permanently delete this fuel purchase record?</p>
+            </div>
+        </div>
+
+        <div class="card card-custom border-danger border-2 shadow-sm mb-4">
+            <div class="card-header bg-danger bg-opacity-10 py-3 border-danger">
+                <h5 class="fw-bold mb-0 text-danger">
+                    <i class="bi bi-receipt me-2"></i>Fuel Receipt #@Model.FuelLogId Summary
+                </h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="alert alert-warning d-flex align-items-center" role="alert">
+                    <i class="bi bi-exclamation-circle-fill fs-4 me-2"></i>
+                    <div>
+                        <strong>Notice:</strong> This action cannot be reversed. Deleting this fuel receipt will adjust calculated vehicle mileage and aggregate cost reporting.
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-bordered mb-0">
+                        <tbody>
+                            <tr>
+                                <th class="bg-light text-muted fw-semibold" style="width: 35%;">Vehicle</th>
+                                <td class="fw-bold text-dark">
+                                    @Model.Vehicle?.VehicleName (@Model.Vehicle?.RegistrationNumber)
+                                </td>
+                            </tr>
+                            <tr>
+                                <th class="bg-light text-muted fw-semibold">Fuel Station</th>
+                                <td class="text-dark">@Model.FuelStation</td>
+                            </tr>
+                            <tr>
+                                <th class="bg-light text-muted fw-semibold">Purchase Date</th>
+                                <td class="text-dark">@Model.FuelDate.ToString("MMMM dd, yyyy")</td>
+                            </tr>
+                            <tr>
+                                <th class="bg-light text-muted fw-semibold">Quantity Consumed</th>
+                                <td class="text-dark">@Model.FuelQuantity.ToString("N2") Litres</td>
+                            </tr>
+                            <tr>
+                                <th class="bg-light text-muted fw-semibold">Unit Price</th>
+                                <td class="text-dark">$@Model.PricePerLitre.ToString("N2") / Litre</td>
+                            </tr>
+                            <tr>
+                                <th class="bg-light text-muted fw-semibold">Total Cost</th>
+                                <td class="text-success fw-bold fs-5">$@Model.TotalCost.ToString("N2")</td>
+                            </tr>
+                            <tr>
+                                <th class="bg-light text-muted fw-semibold">Odometer at Refill</th>
+                                <td class="text-dark">@Model.OdometerReading.ToString("N0") km</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer bg-white border-top p-3 d-flex justify-content-end gap-2">
+                <a asp-action="Index" class="btn btn-outline-secondary px-4">Cancel</a>
+                <form asp-action="Delete" asp-route-id="@Model.FuelLogId" method="post">
+                    <button type="submit" class="btn btn-danger px-4 shadow-sm">
+                        <i class="bi bi-trash-fill me-1"></i> Confirm Delete
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

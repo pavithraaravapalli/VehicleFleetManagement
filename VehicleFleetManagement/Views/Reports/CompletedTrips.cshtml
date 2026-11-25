@@ -1,0 +1,169 @@
+@model VehicleFleetManagement.ViewModels.TripsReportViewModel
+@{
+    ViewData["Title"] = "Completed Trips Audit Report";
+    DateTime? fromDate = ViewBag.FromDate as DateTime?;
+    DateTime? toDate = ViewBag.ToDate as DateTime?;
+    decimal avgDistance = Model.TotalCount > 0 ? Model.TotalDistanceKm / Model.TotalCount : 0;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <a asp-action="Index" class="text-decoration-none text-muted small">
+            <i class="bi bi-arrow-left me-1"></i> Back to Reports Directory
+        </a>
+        <h2 class="fw-bold mb-1 mt-1" style="color: #172554;">
+            <i class="bi bi-check-circle-fill text-info me-2"></i>Completed Trips Audit Report
+        </h2>
+        <p class="text-muted small mb-0">Audited registry of concluded journeys with verified odometer distances</p>
+    </div>
+    <div class="d-flex gap-2">
+        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="window.print()">
+            <i class="bi bi-printer me-1"></i> Print Report
+        </button>
+        <button type="button" class="btn btn-outline-success btn-sm" onclick="exportTableToCSV('Completed_Trips_Report.csv')">
+            <i class="bi bi-file-earmark-spreadsheet me-1"></i> Export CSV
+        </button>
+    </div>
+</div>
+
+<!-- Date Filter Form -->
+<div class="card card-custom shadow-sm border-0 mb-4">
+    <div class="card-body p-3">
+        <form method="get" asp-action="CompletedTrips" class="row g-2 align-items-end">
+            <div class="col-12 col-md-4">
+                <label class="form-label small fw-semibold text-muted mb-1">From Date</label>
+                <input type="date" name="fromDate" value="@(fromDate?.ToString("yyyy-MM-dd"))" class="form-control form-control-sm" />
+            </div>
+            <div class="col-12 col-md-4">
+                <label class="form-label small fw-semibold text-muted mb-1">To Date</label>
+                <input type="date" name="toDate" value="@(toDate?.ToString("yyyy-MM-dd"))" class="form-control form-control-sm" />
+            </div>
+            <div class="col-12 col-md-4 d-flex gap-2">
+                <button type="submit" class="btn btn-info text-white btn-sm flex-grow-1">
+                    <i class="bi bi-filter me-1"></i> Apply Filter
+                </button>
+                <a asp-action="CompletedTrips" class="btn btn-outline-secondary btn-sm">Reset</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Metrics Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-12 col-md-4">
+        <div class="card card-custom p-3 border-start border-info border-4">
+            <div class="text-muted small fw-semibold text-uppercase">Completed Journeys</div>
+            <div class="fs-4 fw-bold text-dark mt-1">@Model.TotalCount Trips</div>
+            <div class="small text-muted mt-1">Safely logged and concluded</div>
+        </div>
+    </div>
+    <div class="col-12 col-md-4">
+        <div class="card card-custom p-3 border-start border-success border-4">
+            <div class="text-muted small fw-semibold text-uppercase">Total Distance Logged</div>
+            <div class="fs-4 fw-bold text-success mt-1">@Model.TotalDistanceKm.ToString("N1") km</div>
+            <div class="small text-muted mt-1">Verified via start & end odometers</div>
+        </div>
+    </div>
+    <div class="col-12 col-md-4">
+        <div class="card card-custom p-3 border-start border-primary border-4">
+            <div class="text-muted small fw-semibold text-uppercase">Average Trip Length</div>
+            <div class="fs-4 fw-bold text-primary mt-1">@avgDistance.ToString("N1") km</div>
+            <div class="small text-muted mt-1">Mean distance per mission</div>
+        </div>
+    </div>
+</div>
+
+<!-- Trips Audit Table -->
+<div class="card card-custom shadow-sm border-0 mb-4">
+    <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+        <h5 class="fw-bold mb-0 text-dark">
+            <i class="bi bi-table me-2 text-info"></i>Completed Journeys Audit Registry
+        </h5>
+        <span class="badge bg-light text-secondary border">@Model.TotalCount Records</span>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0" id="reportTable">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-3">Trip Route</th>
+                        <th>Vehicle</th>
+                        <th>Driver</th>
+                        <th>Departure Date</th>
+                        <th>Arrival Date</th>
+                        <th class="text-end">Start Odometer</th>
+                        <th class="text-end">End Odometer</th>
+                        <th class="text-end">Distance</th>
+                        <th class="text-center pe-3">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Trips.Any())
+                    {
+                        <tr>
+                            <td colspan="9" class="text-center text-muted py-5">
+                                <i class="bi bi-inbox fs-1 text-secondary d-block mb-2"></i>
+                                No completed trips recorded for the selected period.
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var t in Model.Trips)
+                        {
+                            <tr>
+                                <td class="ps-3">
+                                    <div class="fw-bold text-dark">@t.Source <i class="bi bi-arrow-right text-primary mx-1"></i> @t.Destination</div>
+                                    <small class="text-muted">Trip #@t.TripId &bull; @t.Purpose</small>
+                                </td>
+                                <td>
+                                    <div class="fw-semibold text-dark">@t.Vehicle?.VehicleName</div>
+                                    <span class="badge bg-dark small">@t.Vehicle?.RegistrationNumber</span>
+                                </td>
+                                <td>
+                                    <div class="fw-semibold text-dark">@t.Driver?.FullName</div>
+                                    <small class="text-muted">@t.Driver?.PhoneNumber</small>
+                                </td>
+                                <td class="small">@t.StartDate.ToString("MMM dd, yyyy")</td>
+                                <td class="small">@(t.ActualEndDate?.ToString("MMM dd, yyyy") ?? "—")</td>
+                                <td class="text-end small">@t.StartOdometer.ToString("N0") km</td>
+                                <td class="text-end small">@(t.EndOdometer?.ToString("N0") ?? "—") km</td>
+                                <td class="text-end fw-bold text-success fs-6">
+                                    @(t.Distance > 0 ? $"{t.Distance:N1} km" : "—")
+                                </td>
+                                <td class="text-center pe-3">
+                                    <a asp-controller="Trips" asp-action="Details" asp-route-id="@t.TripId" class="btn btn-outline-primary btn-sm py-0 px-2">
+                                        View
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function exportTableToCSV(filename) {
+            var csv = [];
+            var rows = document.querySelectorAll("#reportTable tr");
+            for (var i = 0; i < rows.length; i++) {
+                var row = [], cols = rows[i].querySelectorAll("td, th");
+                for (var j = 0; j < cols.length; j++) 
+                    row.push('"' + cols[j].innerText.replace(/"/g, '""').trim() + '"');
+                csv.push(row.join(","));
+            }
+            var csvFile = new Blob([csv.join("\n")], { type: "text/csv" });
+            var downloadLink = document.createElement("a");
+            downloadLink.download = filename;
+            downloadLink.href = window.URL.createObjectURL(csvFile);
+            downloadLink.style.display = "none";
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+        }
+    </script>
+}

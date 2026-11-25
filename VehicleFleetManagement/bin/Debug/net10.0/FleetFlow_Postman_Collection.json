@@ -1,0 +1,379 @@
+{
+	"info": {
+		"_postman_id": " fleetflow-v1-postman-collection",
+		"name": "FleetFlow Pro - Fleet Management REST APIs",
+		"description": "Comprehensive Postman Collection for testing all RESTful Web API endpoints in the Vehicle Fleet Management & Trip Logging System (INT 402 Project).",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Vehicles API",
+			"item": [
+				{
+					"name": "GET All Vehicles (Paginated & Filtered)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/vehicles?page=1&pageSize=10&search=&status=&vehicleType=",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "vehicles"],
+							"query": [
+								{ "key": "page", "value": "1" },
+								{ "key": "pageSize", "value": "10" },
+								{ "key": "search", "value": "" },
+								{ "key": "status", "value": "" },
+								{ "key": "vehicleType", "value": "" }
+							]
+						}
+					}
+				},
+				{
+					"name": "GET Vehicle By ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/vehicles/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "vehicles", "1"]
+						}
+					}
+				},
+				{
+					"name": "POST Create Vehicle",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"registrationNumber\": \"FL-09-XY-9090\",\n  \"vehicleName\": \"Ford Transit Custom\",\n  \"model\": \"Transit 350\",\n  \"vehicleType\": \"Van\",\n  \"fuelType\": \"Diesel\",\n  \"manufacturingYear\": 2023,\n  \"seatingCapacity\": 3,\n  \"currentOdometer\": 15400.00,\n  \"registrationDate\": \"2023-05-15T00:00:00Z\",\n  \"insuranceExpiryDate\": \"2027-05-15T00:00:00Z\",\n  \"status\": \"Available\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/vehicles",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "vehicles"]
+						}
+					}
+				},
+				{
+					"name": "PUT Update Vehicle",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"vehicleId\": 1,\n  \"registrationNumber\": \"FL-01-AB-1001\",\n  \"vehicleName\": \"Toyota Hilux Double Cab - Fleet Alpha\",\n  \"model\": \"Hilux Revo\",\n  \"vehicleType\": \"Truck\",\n  \"fuelType\": \"Diesel\",\n  \"manufacturingYear\": 2022,\n  \"seatingCapacity\": 5,\n  \"currentOdometer\": 24800.00,\n  \"registrationDate\": \"2022-03-10T00:00:00Z\",\n  \"insuranceExpiryDate\": \"2027-03-10T00:00:00Z\",\n  \"status\": \"Available\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/vehicles/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "vehicles", "1"]
+						}
+					}
+				},
+				{
+					"name": "DELETE Vehicle",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/vehicles/2",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "vehicles", "2"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Drivers API",
+			"item": [
+				{
+					"name": "GET All Drivers (Paginated & Filtered)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/drivers?page=1&pageSize=10&search=&availabilityStatus=",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "drivers"],
+							"query": [
+								{ "key": "page", "value": "1" },
+								{ "key": "pageSize", "value": "10" },
+								{ "key": "search", "value": "" },
+								{ "key": "availabilityStatus", "value": "" }
+							]
+						}
+					}
+				},
+				{
+					"name": "GET Driver By ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/drivers/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "drivers", "1"]
+						}
+					}
+				},
+				{
+					"name": "POST Create Driver",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"fullName\": \"Samantha Jenkins\",\n  \"email\": \"samantha.jenkins@fleet.com\",\n  \"phoneNumber\": \"+1-555-0899\",\n  \"licenseNumber\": \"DL-77441-CA\",\n  \"licenseExpiryDate\": \"2028-11-20T00:00:00Z\",\n  \"address\": \"450 Ocean Drive, Long Beach, CA\",\n  \"joiningDate\": \"2024-01-10T00:00:00Z\",\n  \"availabilityStatus\": \"Available\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/drivers",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "drivers"]
+						}
+					}
+				},
+				{
+					"name": "PUT Update Driver",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"driverId\": 1,\n  \"fullName\": \"David Miller\",\n  \"email\": \"driver@fleet.com\",\n  \"phoneNumber\": \"+1-555-7788\",\n  \"licenseNumber\": \"DL-98765-NY\",\n  \"licenseExpiryDate\": \"2028-08-15T00:00:00Z\",\n  \"address\": \"742 Evergreen Terrace, Springfield\",\n  \"joiningDate\": \"2023-01-15T00:00:00Z\",\n  \"availabilityStatus\": \"Available\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/drivers/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "drivers", "1"]
+						}
+					}
+				},
+				{
+					"name": "DELETE / Deactivate Driver",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/drivers/2",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "drivers", "2"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Trips API",
+			"item": [
+				{
+					"name": "GET All Trips (Paginated & Filtered)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/trips?page=1&pageSize=10&status=&search=",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "trips"],
+							"query": [
+								{ "key": "page", "value": "1" },
+								{ "key": "pageSize", "value": "10" },
+								{ "key": "status", "value": "" },
+								{ "key": "search", "value": "" }
+							]
+						}
+					}
+				},
+				{
+					"name": "GET Trip By ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/trips/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "trips", "1"]
+						}
+					}
+				},
+				{
+					"name": "POST Schedule Trip (Conflict Checking)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"vehicleId\": 1,\n  \"driverId\": 1,\n  \"source\": \"Downtown Logistics Hub\",\n  \"destination\": \"Suburban Distribution Center\",\n  \"startDate\": \"2026-11-15T08:00:00Z\",\n  \"expectedEndDate\": \"2026-11-15T14:00:00Z\",\n  \"purpose\": \"Medical Equipment Transport\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/trips",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "trips"]
+						}
+					}
+				},
+				{
+					"name": "POST Start Trip",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"startOdometer\": 24500.00\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/trips/1/start",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "trips", "1", "start"]
+						}
+					}
+				},
+				{
+					"name": "POST Complete Trip",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"endOdometer\": 24715.50,\n  \"actualEndDate\": \"2026-11-15T13:45:00Z\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/trips/1/complete",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "trips", "1", "complete"]
+						}
+					}
+				},
+				{
+					"name": "DELETE Cancel Trip",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/trips/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "trips", "1"]
+						}
+					}
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "https://localhost:7087",
+			"type": "string"
+		}
+	]
+}
