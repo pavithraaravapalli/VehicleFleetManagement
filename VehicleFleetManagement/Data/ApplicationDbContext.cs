@@ -25,6 +25,7 @@ namespace VehicleFleetManagement.Data
         public virtual DbSet<DriverReview> DriverReviews { get; set; } = null!;
         public virtual DbSet<VehicleIssueReport> VehicleIssueReports { get; set; } = null!;
         public virtual DbSet<DriverAvailabilityLog> DriverAvailabilityLogs { get; set; } = null!;
+        public virtual DbSet<TripRequest> TripRequests { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -368,6 +369,42 @@ namespace VehicleFleetManagement.Data
                       .WithMany(d => d.AvailabilityLogs)
                       .HasForeignKey(l => l.DriverId)
                       .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // ==========================================
+            // 10. TRIP REQUEST CONFIGURATION
+            // ==========================================
+            builder.Entity<TripRequest>(entity =>
+            {
+                entity.ToTable("TripRequests");
+
+                entity.HasKey(r => r.TripRequestId);
+
+                entity.Property(r => r.Source)
+                      .IsRequired()
+                      .HasMaxLength(100);
+
+                entity.Property(r => r.Destination)
+                      .IsRequired()
+                      .HasMaxLength(100);
+
+                entity.Property(r => r.Purpose)
+                      .IsRequired()
+                      .HasMaxLength(500);
+
+                entity.Property(r => r.Status)
+                      .IsRequired()
+                      .HasMaxLength(25);
+
+                entity.HasOne(r => r.User)
+                      .WithMany(u => u.TripRequests)
+                      .HasForeignKey(r => r.UserId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(r => r.ApprovedTrip)
+                      .WithMany()
+                      .HasForeignKey(r => r.ApprovedTripId)
+                      .OnDelete(DeleteBehavior.SetNull);
             });
         }
     }

@@ -1,219 +1,513 @@
+@using Microsoft.AspNetCore.Identity
+@using VehicleFleetManagement.Models
+@using VehicleFleetManagement.Services.Interfaces
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+@inject INotificationService NotificationService
+
+@{
+    var isAuthenticated = SignInManager.IsSignedIn(User);
+    ApplicationUser? currentUser = null;
+    string userRole = "User";
+    int unreadCount = 0;
+    IEnumerable<Notification> recentNotifications = new List<Notification>();
+
+    if (isAuthenticated)
+    {
+        currentUser = await UserManager.GetUserAsync(User);
+        if (currentUser != null)
+        {
+            var roles = await UserManager.GetRolesAsync(currentUser);
+            userRole = roles.FirstOrDefault() ?? "User";
+            unreadCount = await NotificationService.GetUnreadCountAsync(currentUser.Id);
+            recentNotifications = await NotificationService.GetUserNotificationsAsync(currentUser.Id, 5);
+        }
+    }
+
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
+}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@(ViewBag.Title ?? ViewData["Title"] ?? "Portal") - FleetFlow Pro</title>
+    <title>@(ViewBag.Title ?? ViewData["Title"] ?? "Fleet Operations") - FleetFlow Pro</title>
     
     <!-- Bootstrap 5 CSS -->
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <!-- Inter & System Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- Custom FleetFlow Pro SaaS Design System -->
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     
     @await RenderSectionAsync("Styles", required: false)
 </head>
 <body>
-    <header>
-        <nav class="navbar navbar-expand-lg navbar-dark navbar-fleet py-2 sticky-top">
-            <div class="container-fluid px-3 px-lg-4">
-                <a class="navbar-brand d-flex align-items-center" asp-controller="Dashboard" asp-action="Index">
-                    <div class="stat-icon-wrapper bg-teal text-white rounded-3 p-1 me-2" style="background-color: var(--fleet-teal); width: 34px; height: 34px; display: flex; align-items: center; justify-content: center;">
-                        <i class="bi bi-truck-front-fill fs-5"></i>
-                    </div>
-                    <span>FleetFlow <span class="brand-badge">PRO</span></span>
-                </a>
-                
-                <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#fleetNavContent" aria-controls="fleetNavContent" aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                
-                <div class="collapse navbar-collapse" id="fleetNavContent">
-                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                        @if (User.Identity != null && User.Identity.IsAuthenticated)
+@if (isAuthenticated)
+{
+    <!-- Mobile Sidebar Backdrop Overlay -->
+    <div class="saas-sidebar-backdrop" id="sidebarBackdrop"></div>
+
+    <div class="saas-layout">
+        <!-- ========================================== -->
+        <!-- SaaS Navigation Sidebar -->
+        <!-- ========================================== -->
+        <aside class="saas-sidebar" id="saasSidebar">
+            <!-- Sidebar Brand Header -->
+            <a class="saas-sidebar-brand" asp-controller="Dashboard" asp-action="Index">
+                <div class="brand-icon">
+                    <i class="bi bi-truck-front-fill"></i>
+                </div>
+                <div>
+                    <div class="brand-title">FleetFlow <span class="brand-badge">PRO</span></div>
+                    <div style="font-size: 0.72rem; color: #94a3b8; font-weight: 500;">Commercial Fleet SaaS</div>
+                </div>
+            </a>
+
+            <!-- Sidebar Nav Links (Role-specific) -->
+            <div class="saas-sidebar-menu">
+                @if (userRole == "Admin")
+                {
+                    <div class="saas-menu-category">Command Center</div>
+                    <a class="saas-nav-link @(currentController == "Dashboard" && currentAction == "Admin" ? "active" : "")" asp-controller="Dashboard" asp-action="Admin">
+                        <i class="bi bi-speedometer2"></i>
+                        <span>Executive Dashboard</span>
+                    </a>
+                    <a class="saas-nav-link @(currentController == "Vehicles" && currentAction == "Map" ? "active" : "")" asp-controller="Vehicles" asp-action="Map">
+                        <i class="bi bi-geo-alt-fill"></i>
+                        <span>Live Fleet Map</span>
+                    </a>
+
+                    <div class="saas-menu-category">Fleet Operations</div>
+                    <a class="saas-nav-link @(currentController == "Vehicles" && currentAction != "Map" ? "active" : "")" asp-controller="Vehicles" asp-action="Index">
+                        <i class="bi bi-truck"></i>
+                        <span>Vehicle Assets</span>
+                    </a>
+                    <a class="saas-nav-link @(currentController == "Drivers" ? "active" : "")" asp-controller="Drivers" asp-action="Index">
+                        <i class="bi bi-person-badge"></i>
+                        <span>Driver Roster</span>
+                    </a>
+                    <a class="saas-nav-link @(currentController == "Trips" ? "active" : "")" asp-controller="Trips" asp-action="Index">
+                        <i class="bi bi-signpost-2"></i>
+                        <span>Trip Dispatches</span>
+                    </a>
+                    <a class="saas-nav-link @(currentController == "TripRequests" ? "active" : "")" asp-controller="TripRequests" asp-action="Manage">
+                        <i class="bi bi-clipboard-check"></i>
+                        <span>Trip Requests</span>
+                    </a>
+
+                    <div class="saas-menu-category">Maintenance & Fuel</div>
+                    <a class="saas-nav-link @(currentController == "Maintenance" ? "active" : "")" asp-controller="Maintenance" asp-action="Index">
+                        <i class="bi bi-tools"></i>
+                        <span>Service & Repairs</span>
+                    </a>
+                    <a class="saas-nav-link @(currentController == "Fuel" ? "active" : "")" asp-controller="Fuel" asp-action="Index">
+                        <i class="bi bi-fuel-pump"></i>
+                        <span>Fuel Log Telemetry</span>
+                    </a>
+                    <a class="saas-nav-link @(currentController == "Issues" ? "active" : "")" asp-controller="Issues" asp-action="Index">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <span>Fault Reports</span>
+                    </a>
+
+                    <div class="saas-menu-category">Analytics</div>
+                    <a class="saas-nav-link @(currentController == "Reports" ? "active" : "")" asp-controller="Reports" asp-action="Index">
+                        <i class="bi bi-graph-up-arrow"></i>
+                        <span>BI Reports & Exports</span>
+                    </a>
+                }
+                else if (userRole == "Driver")
+                {
+                    <div class="saas-menu-category">Driver Operations</div>
+                    <a class="saas-nav-link @(currentController == "Dashboard" && currentAction == "Driver" ? "active" : "")" asp-controller="Dashboard" asp-action="Driver">
+                        <i class="bi bi-speedometer2"></i>
+                        <span>Driver Dashboard</span>
+                    </a>
+                    <a class="saas-nav-link @(currentController == "Trips" && currentAction == "MyTrips" && string.IsNullOrEmpty(Context.Request.Query["status"]) ? "active" : "")" asp-controller="Trips" asp-action="MyTrips">
+                        <i class="bi bi-signpost-split"></i>
+                        <span>My Assigned Trips</span>
+                    </a>
+                    <a class="saas-nav-link @(currentController == "Trips" && currentAction == "MyTrips" && Context.Request.Query["status"] == "Completed" ? "active" : "")" asp-controller="Trips" asp-action="MyTrips" asp-route-status="Completed">
+                        <i class="bi bi-clock-history"></i>
+                        <span>Trip History</span>
+                    </a>
+
+                    <div class="saas-menu-category">Vehicle & Safety</div>
+                    <a class="saas-nav-link @(currentController == "Issues" && currentAction == "Create" ? "active" : "")" asp-controller="Issues" asp-action="Create">
+                        <i class="bi bi-exclamation-octagon"></i>
+                        <span>Report Vehicle Issue</span>
+                    </a>
+                    <a class="saas-nav-link @(currentController == "Fuel" && currentAction == "Create" ? "active" : "")" asp-controller="Fuel" asp-action="Create">
+                        <i class="bi bi-fuel-pump"></i>
+                        <span>Log Fuel Refill</span>
+                    </a>
+
+                    <div class="saas-menu-category">Account</div>
+                    <a class="saas-nav-link @(currentController == "Notifications" ? "active" : "")" asp-controller="Notifications" asp-action="Index">
+                        <i class="bi bi-bell"></i>
+                        <span>Notifications</span>
+                    </a>
+                    <a class="saas-nav-link @(currentController == "Drivers" && currentAction == "Profile" ? "active" : "")" asp-controller="Drivers" asp-action="Profile">
+                        <i class="bi bi-person-badge"></i>
+                        <span>My Profile</span>
+                    </a>
+                }
+                else
+                {
+                    <div class="saas-menu-category">Staff Transport Portal</div>
+                    <a class="saas-nav-link @(currentController == "Dashboard" && currentAction == "User" ? "active" : "")" asp-controller="Dashboard" asp-action="User">
+                        <i class="bi bi-speedometer2"></i>
+                        <span>User Dashboard</span>
+                    </a>
+                    <a class="saas-nav-link @(currentController == "TripRequests" && currentAction == "Create" ? "active" : "")" asp-controller="TripRequests" asp-action="Create">
+                        <i class="bi bi-plus-circle"></i>
+                        <span>Request Transport</span>
+                    </a>
+                    <a class="saas-nav-link @(currentController == "TripRequests" && currentAction == "Index" ? "active" : "")" asp-controller="TripRequests" asp-action="Index">
+                        <i class="bi bi-clipboard-check"></i>
+                        <span>My Booking Requests</span>
+                    </a>
+                    <a class="saas-nav-link @(currentController == "Trips" && currentAction == "UserTrips" ? "active" : "")" asp-controller="Trips" asp-action="UserTrips">
+                        <i class="bi bi-signpost-2"></i>
+                        <span>My Trips</span>
+                    </a>
+
+                    <div class="saas-menu-category">Account</div>
+                    <a class="saas-nav-link @(currentController == "Notifications" ? "active" : "")" asp-controller="Notifications" asp-action="Index">
+                        <i class="bi bi-bell"></i>
+                        <span>Notifications</span>
+                    </a>
+                    <a class="saas-nav-link @(currentController == "Account" && currentAction == "Profile" ? "active" : "")" asp-controller="Account" asp-action="Profile">
+                        <i class="bi bi-person-gear"></i>
+                        <span>My Profile</span>
+                    </a>
+                }
+            </div>
+
+            <!-- Sidebar Footer Profile Summary -->
+            <div class="saas-sidebar-footer">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center text-truncate me-2">
+                        @if (!string.IsNullOrEmpty(currentUser?.ProfilePictureUrl))
                         {
-                            @if (User.IsInRole("Admin"))
+                            <img src="@currentUser.ProfilePictureUrl" alt="@currentUser.FullName" class="rounded-circle me-2 border border-secondary" style="width: 32px; height: 32px; object-fit: cover;" />
+                        }
+                        else
+                        {
+                            <div class="avatar-circle-sm me-2 bg-primary text-white fw-bold d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; border-radius: 50%; font-size: 0.8rem; background-color: var(--fleet-primary) !important;">
+                                @((currentUser?.FullName?.Length > 0 ? currentUser.FullName[0].ToString().ToUpper() : "U"))
+                            </div>
+                        }
+                        <div class="text-truncate">
+                            <div class="text-white small fw-semibold text-truncate">@(currentUser?.FullName ?? User.Identity?.Name)</div>
+                            <div class="text-muted" style="font-size: 0.7rem;">@userRole Account</div>
+                        </div>
+                    </div>
+                    <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-sm btn-outline-light border-0 text-muted p-1" title="Sign Out">
+                            <i class="bi bi-box-arrow-right fs-6"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ========================================== -->
+        <!-- Main Area: Topbar + Page Content -->
+        <!-- ========================================== -->
+        <div class="saas-main">
+            <!-- SaaS Topbar -->
+            <header class="saas-topbar">
+                <div class="d-flex align-items-center">
+                    <button class="btn btn-link text-dark p-0 me-3 d-lg-none" type="button" id="sidebarToggle" aria-label="Toggle Navigation">
+                        <i class="bi bi-list fs-3"></i>
+                    </button>
+                    <div class="d-none d-sm-block">
+                        <span class="text-muted small fw-medium">FleetFlow Pro</span>
+                        <span class="text-muted mx-1">/</span>
+                        <span class="fw-semibold text-dark small">@(ViewBag.Title ?? currentController)</span>
+                    </div>
+                </div>
+
+                <div class="d-flex align-items-center gap-3">
+                    <!-- Notifications Dropdown -->
+                    <div class="dropdown">
+                        <button class="btn btn-light position-relative p-2 rounded-circle border-0 shadow-none text-secondary" id="topbarNotificationDropdown" data-bs-toggle="dropdown" aria-expanded="false" title="Notifications" style="width: 40px; height: 40px; background-color: var(--fleet-bg);">
+                            <i class="bi bi-bell fs-5"></i>
+                            @if (unreadCount > 0)
                             {
-                                <li class="nav-item">
-                                    <a class="nav-link" asp-controller="Dashboard" asp-action="Admin">
-                                        <i class="bi bi-speedometer2 me-1"></i> Dashboard
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" asp-controller="Vehicles" asp-action="Index">
-                                        <i class="bi bi-truck me-1"></i> Vehicles
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" asp-controller="Drivers" asp-action="Index">
-                                        <i class="bi bi-person-badge me-1"></i> Drivers
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" asp-controller="Trips" asp-action="Index">
-                                        <i class="bi bi-signpost-2 me-1"></i> Trips
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" asp-controller="Maintenance" asp-action="Index">
-                                        <i class="bi bi-tools me-1"></i> Maintenance
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" asp-controller="Fuel" asp-action="Index">
-                                        <i class="bi bi-fuel-pump me-1"></i> Fuel
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" asp-controller="Issues" asp-action="Index">
-                                        <i class="bi bi-exclamation-triangle me-1"></i> Faults
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" asp-controller="Reports" asp-action="Index">
-                                        <i class="bi bi-graph-up-arrow me-1"></i> Reports
-                                    </a>
-                                </li>
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-light" style="font-size: 0.65rem;">
+                                    @(unreadCount > 9 ? "9+" : unreadCount.ToString())
+                                </span>
                             }
-                            else if (User.IsInRole("Driver"))
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-end shadow-lg border-0 dropdown-notifications p-0" aria-labelledby="topbarNotificationDropdown" style="width: 320px;">
+                            <div class="d-flex align-items-center justify-content-between p-3 border-bottom" style="background-color: var(--fleet-bg);">
+                                <span class="fw-bold small text-dark"><i class="bi bi-bell-fill text-primary me-1"></i> Notifications</span>
+                                @if (unreadCount > 0)
+                                {
+                                    <span class="badge bg-primary rounded-pill">@unreadCount Unread</span>
+                                }
+                            </div>
+                            <div class="list-group list-group-flush" style="max-height: 280px; overflow-y: auto;">
+                                @if (recentNotifications.Any())
+                                {
+                                    foreach (var item in recentNotifications)
+                                    {
+                                        <a href="@(item.ActionUrl ?? "/Notifications")" class="list-group-item list-group-item-action p-3 @(!item.IsRead ? "bg-light" : "")">
+                                            <div class="d-flex justify-content-between align-items-start mb-1">
+                                                <span class="fw-semibold small text-dark">@item.Title</span>
+                                                <small class="text-muted" style="font-size: 0.7rem;">@item.CreatedAt.ToString("MMM dd")</small>
+                                            </div>
+                                            <p class="mb-0 text-muted small text-truncate">@item.Message</p>
+                                        </a>
+                                    }
+                                }
+                                else
+                                {
+                                    <div class="p-4 text-center text-muted small">
+                                        <i class="bi bi-check2-circle fs-3 text-success d-block mb-1"></i>
+                                        You're all caught up!
+                                    </div>
+                                }
+                            </div>
+                            <div class="p-2 border-top text-center" style="background-color: var(--fleet-bg);">
+                                <a asp-controller="Notifications" asp-action="Index" class="btn btn-link btn-sm text-decoration-none fw-semibold small text-primary p-0">
+                                    View All Notifications <i class="bi bi-arrow-right"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- User Profile Dropdown -->
+                    <div class="dropdown">
+                        <button class="btn btn-link text-decoration-none p-0 d-flex align-items-center dropdown-toggle" id="topbarUserDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            @if (!string.IsNullOrEmpty(currentUser?.ProfilePictureUrl))
                             {
-                                <li class="nav-item">
-                                    <a class="nav-link" asp-controller="Dashboard" asp-action="Driver">
-                                        <i class="bi bi-speedometer2 me-1"></i> My Workspace
+                                <img src="@currentUser.ProfilePictureUrl" alt="@currentUser.FullName" class="rounded-circle border" style="width: 36px; height: 36px; object-fit: cover;" />
+                            }
+                            else
+                            {
+                                <div class="bg-primary text-white fw-bold d-flex align-items-center justify-content-center rounded-circle" style="width: 36px; height: 36px; font-size: 0.85rem; background-color: var(--fleet-primary) !important;">
+                                    @((currentUser?.FullName?.Length > 0 ? currentUser.FullName[0].ToString().ToUpper() : "U"))
+                                </div>
+                            }
+                            <span class="d-none d-md-inline-block ms-2 fw-semibold text-dark small">@(currentUser?.FullName ?? User.Identity?.Name)</span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 py-2 mt-2" aria-labelledby="topbarUserDropdown" style="min-width: 220px;">
+                            <li class="px-3 py-2 border-bottom" style="background-color: var(--fleet-bg);">
+                                <div class="fw-bold small text-dark">@(currentUser?.FullName ?? User.Identity?.Name)</div>
+                                <div class="text-muted small" style="font-size: 0.75rem;">@currentUser?.Email</div>
+                                <span class="badge bg-primary-subtle text-primary mt-1" style="font-size: 0.65rem;">@userRole Account</span>
+                            </li>
+                            @if (userRole == "Driver")
+                            {
+                                <li>
+                                    <a class="dropdown-item py-2 small" asp-controller="Drivers" asp-action="Profile">
+                                        <i class="bi bi-person-badge text-primary me-2"></i> Driver Profile
                                     </a>
                                 </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" asp-controller="Trips" asp-action="MyTrips">
-                                        <i class="bi bi-geo-alt me-1"></i> My Trips
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" asp-controller="Issues" asp-action="Create">
-                                        <i class="bi bi-exclamation-circle me-1"></i> Report Fault
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" asp-controller="Fuel" asp-action="Create">
-                                        <i class="bi bi-fuel-pump me-1"></i> Log Refill
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" asp-controller="Drivers" asp-action="Profile">
-                                        <i class="bi bi-person-vcard me-1"></i> Profile & Ratings
+                                <li>
+                                    <a class="dropdown-item py-2 small" asp-controller="Dashboard" asp-action="Driver">
+                                        <i class="bi bi-speedometer2 text-primary me-2"></i> Driver Workspace
                                     </a>
                                 </li>
                             }
                             else
                             {
-                                <li class="nav-item">
-                                    <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Dashboard" ? "active" : "")" asp-controller="Dashboard" asp-action="User">
-                                        <i class="bi bi-speedometer2 me-1"></i> Workspace
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Trips" ? "active" : "")" asp-controller="Trips" asp-action="Index">
-                                        <i class="bi bi-signpost-2 me-1"></i> Trip Schedules
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Notifications" ? "active" : "")" asp-controller="Notifications" asp-action="Index">
-                                        <i class="bi bi-bell me-1"></i> Notifications
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Account" && ViewContext.RouteData.Values["action"]?.ToString() == "Profile" ? "active" : "")" asp-controller="Account" asp-action="Profile">
-                                        <i class="bi bi-person-gear me-1"></i> My Profile
+                                <li>
+                                    <a class="dropdown-item py-2 small" asp-controller="Account" asp-action="Profile">
+                                        <i class="bi bi-person-circle text-primary me-2"></i> My Profile
                                     </a>
                                 </li>
                             }
-                        }
-                    </ul>
-                    
-                    <partial name="_LoginPartial" />
+                            <li>
+                                <a class="dropdown-item py-2 small" asp-controller="Notifications" asp-action="Index">
+                                    <i class="bi bi-bell text-secondary me-2"></i> Notification Center
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider my-1"></li>
+                            <li>
+                                <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="dropdown-item py-2 small text-danger">
+                                        <i class="bi bi-box-arrow-right me-2"></i> Sign Out
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Floating Alert / Toast Notifications -->
+            <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1090;">
+                @if (TempData["Success"] != null)
+                {
+                    <div class="toast align-items-center text-bg-success border-0 show shadow-lg mb-2" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="true" data-bs-delay="6000">
+                        <div class="d-flex">
+                            <div class="toast-body d-flex align-items-center">
+                                <i class="bi bi-check-circle-fill fs-5 me-2"></i>
+                                <span>@TempData["Success"]</span>
+                            </div>
+                            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                        </div>
+                    </div>
+                }
+                @if (TempData["Error"] != null)
+                {
+                    <div class="toast align-items-center text-bg-danger border-0 show shadow-lg mb-2" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="true" data-bs-delay="8000">
+                        <div class="d-flex">
+                            <div class="toast-body d-flex align-items-center">
+                                <i class="bi bi-exclamation-triangle-fill fs-5 me-2"></i>
+                                <span>@TempData["Error"]</span>
+                            </div>
+                            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                        </div>
+                    </div>
+                }
+                @if (TempData["Info"] != null)
+                {
+                    <div class="toast align-items-center text-bg-primary border-0 show shadow-lg mb-2" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="true" data-bs-delay="6000">
+                        <div class="d-flex">
+                            <div class="toast-body d-flex align-items-center">
+                                <i class="bi bi-info-circle-fill fs-5 me-2"></i>
+                                <span>@TempData["Info"]</span>
+                            </div>
+                            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <!-- Page Body Content -->
+            <main class="saas-content">
+                @RenderBody()
+            </main>
+
+            <!-- SaaS Modern Footer -->
+            <footer class="footer-fleet py-3 border-top bg-white">
+                <div class="container-fluid px-3 d-flex justify-content-between align-items-center flex-wrap gap-2 text-muted small">
+                    <div>
+                        &copy; 2026 - <strong>FleetFlow Pro</strong> Commercial SaaS Fleet Operations
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge bg-light text-secondary border"><i class="bi bi-hdd-network me-1"></i> ASP.NET Core 10</span>
+                        <span class="badge bg-light text-secondary border"><i class="bi bi-database me-1"></i> SQL Server LocalDB</span>
+                        <span class="badge bg-light text-secondary border"><i class="bi bi-shield-check me-1"></i> Role RBAC</span>
+                    </div>
+                </div>
+            </footer>
+        </div>
+    </div>
+}
+else
+{
+    <!-- ========================================== -->
+    <!-- Unauthenticated Public Layout (Login/Register/Recovery) -->
+    <!-- ========================================== -->
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-dark" style="background-color: var(--fleet-navy); border-bottom: 1px solid rgba(255, 255, 255, 0.08);">
+            <div class="container px-3 px-lg-4">
+                <a class="navbar-brand d-flex align-items-center" asp-controller="Account" asp-action="Login">
+                    <div class="brand-icon me-2" style="width: 34px; height: 34px; background-color: var(--fleet-primary); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #fff;">
+                        <i class="bi bi-truck-front-fill fs-5"></i>
+                    </div>
+                    <span class="fw-bold text-white">FleetFlow <span class="brand-badge">PRO</span></span>
+                </a>
+                
+                <div class="d-flex align-items-center gap-2">
+                    <a class="btn btn-sm btn-outline-light px-3" asp-controller="Account" asp-action="Login">
+                        <i class="bi bi-box-arrow-in-right me-1"></i> Sign In
+                    </a>
+                    <a class="btn btn-sm btn-primary px-3" style="background-color: var(--fleet-primary); border-color: var(--fleet-primary);" asp-controller="Account" asp-action="Register">
+                        <i class="bi bi-person-plus me-1"></i> Register
+                    </a>
                 </div>
             </div>
         </nav>
     </header>
 
-    <!-- Global Floating Toast Container -->
-    <div class="toast-container" id="toastPlacement">
+    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1090;">
         @if (TempData["Success"] != null)
         {
-            <div class="toast align-items-center text-bg-success border-0 show shadow-lg" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="true" data-bs-delay="6000">
+            <div class="toast align-items-center text-bg-success border-0 show shadow-lg mb-2" role="alert" aria-live="assertive" aria-atomic="true">
                 <div class="d-flex">
                     <div class="toast-body d-flex align-items-center">
                         <i class="bi bi-check-circle-fill fs-5 me-2"></i>
                         <span>@TempData["Success"]</span>
                     </div>
-                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
                 </div>
             </div>
         }
         @if (TempData["Error"] != null)
         {
-            <div class="toast align-items-center text-bg-danger border-0 show shadow-lg" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="true" data-bs-delay="8000">
+            <div class="toast align-items-center text-bg-danger border-0 show shadow-lg mb-2" role="alert" aria-live="assertive" aria-atomic="true">
                 <div class="d-flex">
                     <div class="toast-body d-flex align-items-center">
                         <i class="bi bi-exclamation-triangle-fill fs-5 me-2"></i>
                         <span>@TempData["Error"]</span>
                     </div>
-                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-                </div>
-            </div>
-        }
-        @if (TempData["Info"] != null)
-        {
-            <div class="toast align-items-center text-bg-primary border-0 show shadow-lg" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="true" data-bs-delay="6000">
-                <div class="d-flex">
-                    <div class="toast-body d-flex align-items-center">
-                        <i class="bi bi-info-circle-fill fs-5 me-2"></i>
-                        <span>@TempData["Info"]</span>
-                    </div>
-                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
                 </div>
             </div>
         }
     </div>
 
-    <div class="container-fluid px-3 px-lg-4 py-4 flex-grow-1">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
-    </div>
+    <main class="py-4 flex-grow-1">
+        @RenderBody()
+    </main>
 
-    <footer class="footer-fleet py-3">
-        <div class="container-fluid px-3 px-lg-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
-            <div>
-                &copy; 2026 - <strong>FleetFlow Pro</strong> Commercial SaaS Fleet Operations
-            </div>
-            <div class="d-flex align-items-center gap-2">
-                <span class="badge bg-light text-secondary border"><i class="bi bi-hdd-network me-1"></i> ASP.NET Core 10 MVC</span>
-                <span class="badge bg-light text-secondary border"><i class="bi bi-database me-1"></i> SQL Server LocalDB</span>
-                <span class="badge bg-light text-secondary border"><i class="bi bi-shield-check me-1"></i> Identity & Google OAuth</span>
-            </div>
+    <footer class="footer-fleet py-3 border-top bg-white">
+        <div class="container px-3 px-lg-4 d-flex justify-content-between align-items-center flex-wrap gap-2 text-muted small">
+            <div>&copy; 2026 - <strong>FleetFlow Pro</strong> Commercial SaaS Fleet Operations</div>
+            <div>Secure Transport Management Platform</div>
         </div>
     </footer>
+}
 
-    <!-- Bootstrap 5 Bundle JS -->
+    <!-- Core Scripts -->
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- Chart.js CDN for visual analytics -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
-    
+
     <script>
-        // Auto-initialize Bootstrap Toasts
+        // Initialize Sidebar Toggle on Mobile
         document.addEventListener('DOMContentLoaded', function () {
-            var toastElList = [].slice.call(document.querySelectorAll('.toast'));
-            var toastList = toastElList.map(function (toastEl) {
-                var toast = new bootstrap.Toast(toastEl);
+            const sidebar = document.getElementById('saasSidebar');
+            const backdrop = document.getElementById('sidebarBackdrop');
+            const toggleBtn = document.getElementById('sidebarToggle');
+
+            if (toggleBtn && sidebar && backdrop) {
+                toggleBtn.addEventListener('click', function () {
+                    sidebar.classList.toggle('show');
+                    backdrop.classList.toggle('show');
+                });
+
+                backdrop.addEventListener('click', function () {
+                    sidebar.classList.remove('show');
+                    backdrop.classList.remove('show');
+                });
+            }
+
+            // Auto-trigger toasts
+            const toastElList = [].slice.call(document.querySelectorAll('.toast'));
+            toastElList.map(function (toastEl) {
+                const toast = new bootstrap.Toast(toastEl);
                 toast.show();
                 return toast;
             });
         });
     </script>
-    
+
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

@@ -1,0 +1,133 @@
+@model IEnumerable<VehicleFleetManagement.Models.Trip>
+@{
+    ViewData["Title"] = "My Transport Journeys";
+    string selectedStatus = ViewBag.SelectedStatus as string ?? "";
+    int totalCount = Model?.Count() ?? 0;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <h2 class="fw-bold mb-1" style="color: var(--fleet-navy);">
+            <i class="bi bi-signpost-2 me-2" style="color: var(--fleet-primary);"></i>My Transport Journeys
+        </h2>
+        <p class="text-muted small mb-0">Track official journeys scheduled and executed for your approved transportation requests.</p>
+    </div>
+    <a asp-controller="TripRequests" asp-action="Create" class="btn btn-primary d-inline-flex align-items-center shadow-sm px-3 py-2" style="background-color: var(--fleet-primary); border-color: var(--fleet-primary);">
+        <i class="bi bi-plus-circle me-2"></i> Request Transport
+    </a>
+</div>
+
+<!-- Status Filter Tabs -->
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div class="btn-group btn-group-sm">
+        <a asp-action="UserTrips" class="btn @(string.IsNullOrEmpty(selectedStatus) ? "btn-primary" : "btn-outline-secondary")">All Journeys</a>
+        <a asp-action="UserTrips" asp-route-status="Scheduled" class="btn @(selectedStatus == "Scheduled" ? "btn-primary" : "btn-outline-secondary")">Scheduled</a>
+        <a asp-action="UserTrips" asp-route-status="InProgress" class="btn @(selectedStatus == "InProgress" ? "btn-primary" : "btn-outline-secondary")">Active</a>
+        <a asp-action="UserTrips" asp-route-status="Completed" class="btn @(selectedStatus == "Completed" ? "btn-primary" : "btn-outline-secondary")">Completed</a>
+    </div>
+    <div class="text-muted small">
+        Showing <strong>@totalCount</strong> journey(s)
+    </div>
+</div>
+
+@if (Model == null || !Model.Any())
+{
+    <div class="card card-custom p-5 text-center my-4 shadow-sm">
+        <div class="avatar-placeholder mx-auto mb-3" style="width: 64px; height: 64px; background-color: var(--fleet-primary-light); color: var(--fleet-primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.75rem;">
+            <i class="bi bi-signpost-2"></i>
+        </div>
+        <h5 class="fw-bold text-dark">No Travel Journeys Found</h5>
+        <p class="text-muted mx-auto mb-4" style="max-width: 480px;">
+            You do not have any journeys matching this filter. Once you submit a transport request and fleet administrators approve it, your assigned vehicle and driver details will appear here.
+        </p>
+        <a asp-controller="TripRequests" asp-action="Create" class="btn btn-primary px-4 py-2" style="background-color: var(--fleet-primary); border-color: var(--fleet-primary);">
+            <i class="bi bi-plus-circle me-2"></i> Request Transport Now
+        </a>
+    </div>
+}
+else
+{
+    <div class="row g-3">
+        @foreach (var trip in Model)
+        {
+            <div class="col-12 col-lg-6">
+                <div class="card card-custom h-100 shadow-sm p-3 border-top @(trip.TripStatus == "InProgress" ? "border-primary border-4" : trip.TripStatus == "Completed" ? "border-success border-3" : "border-warning border-3")">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                            <span class="badge bg-light text-secondary border me-1">Trip #@trip.TripId</span>
+                            @if (trip.TripStatus == "Scheduled")
+                            {
+                                <span class="badge bg-warning text-dark"><i class="bi bi-calendar-event me-1"></i> Scheduled</span>
+                            }
+                            else if (trip.TripStatus == "InProgress")
+                            {
+                                <span class="badge bg-primary"><i class="bi bi-play-circle me-1"></i> Active Journey</span>
+                            }
+                            else if (trip.TripStatus == "Completed")
+                            {
+                                <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i> Completed</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">@trip.TripStatus</span>
+                            }
+                        </div>
+                        <div class="text-muted small">
+                            <i class="bi bi-calendar me-1"></i> @trip.StartDate.ToString("MMM dd, yyyy HH:mm")
+                        </div>
+                    </div>
+
+                    <!-- Route Display -->
+                    <div class="p-3 bg-light rounded mb-3">
+                        <div class="d-flex align-items-center mb-1">
+                            <i class="bi bi-geo-alt-fill text-danger me-2"></i>
+                            <div class="fw-bold text-dark">@trip.Source</div>
+                            <i class="bi bi-arrow-right mx-2 text-muted"></i>
+                            <i class="bi bi-flag-fill text-primary me-2"></i>
+                            <div class="fw-bold text-dark">@trip.Destination</div>
+                        </div>
+                        <div class="text-muted small text-truncate">
+                            <i class="bi bi-chat-left-text me-1"></i> Purpose: @trip.Purpose
+                        </div>
+                    </div>
+
+                    <!-- Vehicle & Driver Information -->
+                    <div class="row g-2 small mb-3">
+                        <div class="col-6">
+                            <div class="text-muted">Assigned Vehicle:</div>
+                            <div class="fw-semibold text-dark">@(trip.Vehicle?.VehicleName ?? "Fleet Vehicle")</div>
+                            <span class="badge bg-light text-dark border font-monospace">@(trip.Vehicle?.RegistrationNumber ?? "N/A")</span>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-muted">Assigned Driver:</div>
+                            <div class="fw-semibold text-dark">@(trip.Driver?.FullName ?? "Assigned Driver")</div>
+                            <div class="text-muted small"><i class="bi bi-telephone me-1"></i>@(trip.Driver?.PhoneNumber ?? "Contact via Admin")</div>
+                        </div>
+                    </div>
+
+                    @if (trip.TripStatus == "Completed")
+                    {
+                        <div class="bg-success bg-opacity-10 rounded p-2 small mb-3 d-flex justify-content-between align-items-center">
+                            <span><i class="bi bi-speedometer2 text-success me-1"></i> Distance Travelled:</span>
+                            <strong class="text-success">@trip.Distance.ToString("N1") km</strong>
+                        </div>
+                    }
+
+                    <!-- Actions Toolbar for User (No Driver Operational Actions) -->
+                    <div class="mt-auto pt-2 border-top d-flex justify-content-between align-items-center flex-wrap gap-2">
+                        <a asp-action="Details" asp-route-id="@trip.TripId" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-eye me-1"></i> View Trip Details
+                        </a>
+
+                        @if (trip.TripStatus == "Completed")
+                        {
+                            <a asp-action="Details" asp-route-id="@trip.TripId" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-star me-1"></i> Review Driver
+                            </a>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}

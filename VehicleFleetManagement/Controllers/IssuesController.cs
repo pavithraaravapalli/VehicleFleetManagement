@@ -13,7 +13,7 @@ using VehicleFleetManagement.ViewModels;
 
 namespace VehicleFleetManagement.Controllers
 {
-    [Authorize]
+    [Authorize(Roles = $"{DbSeeder.RoleAdmin},{DbSeeder.RoleDriver}")]
     public class IssuesController : Controller
     {
         private readonly IDriverExperienceService _driverExperienceService;

@@ -72,6 +72,18 @@ namespace VehicleFleetManagement.Models
         [Display(Name = "Vehicle Status")]
         public string Status { get; set; } = VehicleStatus.Available; // Available, Assigned, UnderMaintenance, Inactive
 
+        [Column(TypeName = "decimal(9,6)")]
+        [Display(Name = "Current Latitude")]
+        public decimal? CurrentLatitude { get; set; }
+
+        [Column(TypeName = "decimal(9,6)")]
+        [Display(Name = "Current Longitude")]
+        public decimal? CurrentLongitude { get; set; }
+
+        [StringLength(100)]
+        [Display(Name = "Current Location / Terminal")]
+        public string? CurrentLocationName { get; set; }
+
         [Display(Name = "Record Created")]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 

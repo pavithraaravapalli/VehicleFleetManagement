@@ -1,7 +1,6 @@
 @model VehicleFleetManagement.ViewModels.LoginViewModel
 @{
     ViewData["Title"] = "Sign In - FleetFlow Pro";
-    bool isGoogleConfigured = ViewBag.IsGoogleConfigured ?? false;
 }
 
 <div class="container py-4 py-md-5">
@@ -11,11 +10,11 @@
                 
                 <!-- Brand Header -->
                 <div class="text-center mb-4">
-                    <div class="d-inline-flex align-items-center justify-content-center p-3 rounded-circle mb-3" style="background-color: var(--fleet-teal-subtle); color: var(--fleet-teal);">
+                    <div class="d-inline-flex align-items-center justify-content-center p-3 rounded-circle mb-3" style="background-color: var(--fleet-primary-light); color: var(--fleet-primary);">
                         <i class="bi bi-truck-front-fill display-6"></i>
                     </div>
                     <h3 class="fw-bold text-dark mb-1">FleetFlow <span class="brand-badge">PRO</span></h3>
-                    <p class="text-muted small">Sign in to your enterprise fleet management portal</p>
+                    <p class="text-muted small">Sign in to your fleet management account</p>
                 </div>
 
                 @if (!ViewData.ModelState.IsValid && ViewData.ModelState[string.Empty] != null)
@@ -27,26 +26,6 @@
                     </div>
                 }
 
-                <!-- Google OAuth Sign-in Button -->
-                <form asp-controller="Account" asp-action="ExternalLogin" asp-route-returnUrl="@ViewData["ReturnUrl"]" method="post" class="mb-3">
-                    @Html.AntiForgeryToken()
-                    <input type="hidden" name="provider" value="Google" />
-                    <button type="submit" class="btn btn-google py-2 w-100 shadow-sm">
-                        <svg class="me-2" width="18" height="18" viewBox="0 0 48 48">
-                            <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
-                            <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
-                            <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
-                            <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
-                        </svg>
-                        <span>Continue with Google</span>
-                    </button>
-                </form>
-
-                <div class="position-relative text-center my-3">
-                    <hr class="text-muted" />
-                    <span class="position-absolute top-50 start-50 translate-middle bg-white px-3 text-muted small fw-semibold">or sign in with email</span>
-                </div>
-
                 <!-- Email & Password Form -->
                 <form asp-controller="Account" asp-action="Login" asp-route-returnUrl="@ViewData["ReturnUrl"]" method="post" id="loginForm">
                     @Html.AntiForgeryToken()
@@ -55,7 +34,7 @@
                         <label asp-for="Email" class="form-label small fw-semibold text-dark"></label>
                         <div class="input-group">
                             <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-envelope"></i></span>
-                            <input asp-for="Email" class="form-control border-start-0" placeholder="admin@fleet.com" autocomplete="email" required />
+                            <input asp-for="Email" class="form-control border-start-0" placeholder="your.name@company.com" autocomplete="email" required />
                         </div>
                         <span asp-validation-for="Email" class="text-danger small"></span>
                     </div>
@@ -63,7 +42,7 @@
                     <div class="mb-3">
                         <div class="d-flex justify-content-between align-items-center">
                             <label asp-for="Password" class="form-label small fw-semibold text-dark mb-0"></label>
-                            <a href="javascript:void(0)" class="text-decoration-none small text-muted" onclick="alert('For demo accounts, use Admin@123, Driver@123, or User@123.')">Forgot password?</a>
+                            <a asp-controller="Account" asp-action="ForgotPassword" class="text-decoration-none small" style="color: var(--fleet-primary);">Forgot password?</a>
                         </div>
                         <div class="input-group mt-1">
                             <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-lock"></i></span>
@@ -81,7 +60,7 @@
                     </div>
 
                     <button type="submit" class="btn btn-fleet-primary w-100 py-2 d-flex align-items-center justify-content-center shadow-sm" id="submitLoginBtn">
-                        <span id="btnText"><i class="bi bi-box-arrow-in-right me-2"></i>Sign In to Dashboard</span>
+                        <span id="btnText"><i class="bi bi-box-arrow-in-right me-2"></i>Sign In</span>
                         <span id="btnSpinner" class="spinner-border spinner-border-sm me-2 d-none" role="status" aria-hidden="true"></span>
                         <span id="btnSpinnerText" class="d-none">Authenticating...</span>
                     </button>
@@ -90,8 +69,30 @@
                 <div class="text-center mt-4 pt-3 border-top">
                     <p class="text-muted small mb-0">
                         Don't have an account? 
-                        <a asp-controller="Account" asp-action="Register" asp-route-returnUrl="@ViewData["ReturnUrl"]" class="fw-semibold text-decoration-none" style="color: var(--fleet-teal);">Create an account</a>
+                        <a asp-controller="Account" asp-action="Register" asp-route-returnUrl="@ViewData["ReturnUrl"]" class="fw-semibold text-decoration-none" style="color: var(--fleet-primary);">Create an account</a>
                     </p>
+                </div>
+
+                <!-- Quick Sign-In Credential Helpers for Review & Testing -->
+                <div class="mt-4 p-3 bg-light rounded-3 border">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="small fw-bold text-dark"><i class="bi bi-key-fill text-primary me-1"></i> Quick Test Credentials:</span>
+                        <span class="badge bg-white text-secondary border small">Click to fill</span>
+                    </div>
+                    <div class="d-flex flex-column gap-2">
+                        <button type="button" class="btn btn-sm btn-outline-secondary text-start d-flex justify-content-between align-items-center py-1 px-2" onclick="fillCredentials('admin@fleet.com', 'Admin@123')">
+                            <span><strong class="text-dark">Admin:</strong> admin@fleet.com</span>
+                            <span class="font-monospace small text-muted">Admin@123</span>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary text-start d-flex justify-content-between align-items-center py-1 px-2" onclick="fillCredentials('rohan.kulkarni@fleetflowpro.in', 'Driver@123')">
+                            <span><strong class="text-dark">Assigned Driver:</strong> rohan.kulkarni@fleetflowpro.in</span>
+                            <span class="font-monospace small text-muted">Driver@123</span>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary text-start d-flex justify-content-between align-items-center py-1 px-2" onclick="fillCredentials('user@fleet.com', 'User@123')">
+                            <span><strong class="text-dark">Staff User:</strong> user@fleet.com</span>
+                            <span class="font-monospace small text-muted">User@123</span>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -101,26 +102,41 @@
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script>
+        // Auto-fill credential helper
+        function fillCredentials(email, password) {
+            const emailInput = document.querySelector('input[name="Email"]');
+            const passInput = document.getElementById('loginPasswordInput');
+            if (emailInput && passInput) {
+                emailInput.value = email;
+                passInput.value = password;
+                emailInput.focus();
+            }
+        }
+
         // Toggle password show/hide
         const toggleBtn = document.getElementById('togglePasswordBtn');
         const passInput = document.getElementById('loginPasswordInput');
         const passIcon = document.getElementById('togglePasswordIcon');
 
-        toggleBtn.addEventListener('click', function () {
-            const isPassword = passInput.getAttribute('type') === 'password';
-            passInput.setAttribute('type', isPassword ? 'text' : 'password');
-            passIcon.className = isPassword ? 'bi bi-eye-slash' : 'bi bi-eye';
-        });
+        if (toggleBtn && passInput && passIcon) {
+            toggleBtn.addEventListener('click', function () {
+                const isPassword = passInput.getAttribute('type') === 'password';
+                passInput.setAttribute('type', isPassword ? 'text' : 'password');
+                passIcon.className = isPassword ? 'bi bi-eye-slash' : 'bi bi-eye';
+            });
+        }
 
         // Submit button loading animation
         const loginForm = document.getElementById('loginForm');
-        loginForm.addEventListener('submit', function () {
-            if ($(loginForm).valid()) {
-                document.getElementById('btnText').classList.add('d-none');
-                document.getElementById('btnSpinner').classList.remove('d-none');
-                document.getElementById('btnSpinnerText').classList.remove('d-none');
-                document.getElementById('submitLoginBtn').setAttribute('disabled', 'disabled');
-            }
-        });
+        if (loginForm) {
+            loginForm.addEventListener('submit', function () {
+                if ($(loginForm).valid()) {
+                    document.getElementById('btnText').classList.add('d-none');
+                    document.getElementById('btnSpinner').classList.remove('d-none');
+                    document.getElementById('btnSpinnerText').classList.remove('d-none');
+                    document.getElementById('submitLoginBtn').setAttribute('disabled', 'disabled');
+                }
+            });
+        }
     </script>
 }

@@ -1,0 +1,393 @@
+@model IEnumerable<VehicleFleetManagement.Models.Vehicle>
+@{
+    ViewData["Title"] = "Fleet Terminal & Status Map";
+    int totalVehicles = Model.Count();
+    int availableCount = Model.Count(v => v.Status == VehicleFleetManagement.Models.VehicleStatus.Available);
+    int assignedCount = Model.Count(v => v.Status == VehicleFleetManagement.Models.VehicleStatus.Assigned);
+    int maintenanceCount = Model.Count(v => v.Status == VehicleFleetManagement.Models.VehicleStatus.UnderMaintenance);
+    int vehiclesWithGps = Model.Count(v => v.CurrentLatitude.HasValue && v.CurrentLongitude.HasValue);
+}
+
+@section Styles {
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <style>
+        .fleet-map-container {
+            height: calc(100vh - 220px);
+            min-height: 520px;
+            border-radius: var(--fleet-radius);
+            overflow: hidden;
+            border: 1px solid var(--fleet-border);
+            box-shadow: var(--fleet-shadow);
+            position: relative;
+        }
+
+        .map-vehicle-sidebar {
+            width: 320px;
+            height: 100%;
+            background-color: #ffffff;
+            border-right: 1px solid var(--fleet-border);
+            display: flex;
+            flex-direction: column;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1000;
+            box-shadow: var(--fleet-shadow);
+            transition: transform 0.25s ease;
+        }
+
+        .map-vehicle-list {
+            overflow-y: auto;
+            flex-grow: 1;
+        }
+
+        .vehicle-map-item {
+            padding: 0.85rem 1rem;
+            border-bottom: 1px solid var(--fleet-border);
+            cursor: pointer;
+            transition: background-color 0.15s ease;
+        }
+
+        .vehicle-map-item:hover {
+            background-color: var(--fleet-primary-subtle);
+        }
+
+        .vehicle-map-item.active {
+            background-color: var(--fleet-primary-light);
+            border-left: 4px solid var(--fleet-primary);
+        }
+
+        #fleetMap {
+            width: 100%;
+            height: 100%;
+            margin-left: 320px;
+        }
+
+        @@media (max-width: 991.98px) {
+            .map-vehicle-sidebar {
+                transform: translateX(-100%);
+            }
+            .map-vehicle-sidebar.show {
+                transform: translateX(0);
+            }
+            #fleetMap {
+                margin-left: 0;
+            }
+        }
+
+        .custom-fleet-pin {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            color: #ffffff;
+            font-size: 15px;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.35);
+            border: 2px solid #ffffff;
+            transition: transform 0.2s ease;
+        }
+
+        .custom-fleet-pin:hover {
+            transform: scale(1.15);
+        }
+
+        .pin-available { background-color: #2563eb; }
+        .pin-assigned { background-color: #f59e0b; }
+        .pin-maintenance { background-color: #ef4444; }
+
+        .leaflet-popup-content-wrapper {
+            border-radius: 10px;
+            box-shadow: var(--fleet-shadow-lg);
+            padding: 0;
+            overflow: hidden;
+        }
+
+        .leaflet-popup-content {
+            margin: 0;
+            line-height: 1.4;
+        }
+    </style>
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div>
+        <h2 class="fw-bold mb-1" style="color: var(--fleet-navy);">
+            <i class="bi bi-geo-alt text-primary me-2"></i>Fleet Terminal & Asset Map
+        </h2>
+        <p class="text-muted small mb-0">Recorded depot locations, operational availability, and vehicle inventory status</p>
+    </div>
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+        <span class="badge bg-light text-dark border px-3 py-2">
+            <strong class="text-primary">@totalVehicles</strong> Total
+        </span>
+        <span class="badge bg-light text-dark border px-3 py-2">
+            <strong class="text-primary">@availableCount</strong> Ready
+        </span>
+        <span class="badge bg-light text-dark border px-3 py-2">
+            <strong class="text-warning">@assignedCount</strong> On Trip
+        </span>
+        <span class="badge bg-light text-dark border px-3 py-2">
+            <strong class="text-danger">@maintenanceCount</strong> In Service
+        </span>
+        @if (totalVehicles > 0)
+        {
+            <button class="btn btn-outline-secondary btn-sm d-lg-none" type="button" id="toggleMapSidebar">
+                <i class="bi bi-list me-1"></i> Fleet List
+            </button>
+        }
+    </div>
+</div>
+
+@if (!Model.Any())
+{
+    <!-- Proper Clean Empty State -->
+    <div class="card-modern p-5 text-center my-4">
+        <div class="avatar-placeholder mx-auto mb-3" style="width: 64px; height: 64px; background-color: var(--fleet-primary-light); color: var(--fleet-primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.75rem;">
+            <i class="bi bi-truck"></i>
+        </div>
+        <h5 class="fw-bold text-dark">No Vehicles in Fleet</h5>
+        <p class="text-muted mx-auto mb-4" style="max-width: 480px;">
+            No vehicles have been added to the system yet. Once vehicles are registered, their operational status and terminal locations will appear here.
+        </p>
+        <a asp-controller="Vehicles" asp-action="Create" class="btn btn-primary px-4 py-2" style="background-color: var(--fleet-primary); border-color: var(--fleet-primary);">
+            <i class="bi bi-plus-circle me-2"></i> Add First Vehicle
+        </a>
+    </div>
+}
+else
+{
+    @if (vehiclesWithGps == 0)
+    {
+        <!-- Transparent Real-World Notice: No GPS Telemetry -->
+        <div class="alert alert-light border shadow-sm py-2 px-3 mb-3 d-flex align-items-center small text-muted">
+            <i class="bi bi-info-circle text-primary fs-5 me-2"></i>
+            <span>Live GPS telematics hardware is not connected. Displaying recorded vehicle terminal information and operational status.</span>
+        </div>
+    }
+
+    <div class="fleet-map-container">
+        <!-- Collapsible Asset Drawer -->
+        <div class="map-vehicle-sidebar" id="mapSidebar">
+            <div class="p-3 border-bottom bg-light">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="fw-bold text-dark small"><i class="bi bi-truck text-primary me-1"></i> Fleet Assets</span>
+                    <span class="badge bg-primary">@totalVehicles</span>
+                </div>
+                <input type="text" id="vehicleSearchInput" class="form-control form-control-sm" placeholder="Search vehicle name or reg #..." />
+            </div>
+
+            <!-- Filter Chips -->
+            <div class="p-2 border-bottom d-flex gap-1 flex-wrap bg-white">
+                <button type="button" class="btn btn-xs btn-primary filter-chip active" data-filter="All">All</button>
+                <button type="button" class="btn btn-xs btn-outline-primary filter-chip" data-filter="Available">Ready</button>
+                <button type="button" class="btn btn-xs btn-outline-warning text-dark filter-chip" data-filter="Assigned">On Trip</button>
+                <button type="button" class="btn btn-xs btn-outline-danger filter-chip" data-filter="UnderMaintenance">Service</button>
+            </div>
+
+            <div class="map-vehicle-list" id="vehicleListContainer">
+                @foreach (var v in Model)
+                {
+                    bool hasGps = v.CurrentLatitude.HasValue && v.CurrentLongitude.HasValue;
+
+                    var statusBadge = v.Status switch
+                    {
+                        "Available" => "bg-primary",
+                        "Assigned" => "bg-warning text-dark",
+                        _ => "bg-danger"
+                    };
+
+                    <div class="vehicle-map-item" data-id="@v.VehicleId" data-has-gps="@(hasGps ? "true" : "false")" data-lat="@(v.CurrentLatitude?.ToString() ?? "")" data-lng="@(v.CurrentLongitude?.ToString() ?? "")" data-status="@v.Status" data-name="@v.VehicleName.ToLower()" data-reg="@v.RegistrationNumber.ToLower()">
+                        <div class="d-flex justify-content-between align-items-start mb-1">
+                            <strong class="text-dark small">@v.VehicleName</strong>
+                            <span class="badge @statusBadge" style="font-size: 0.65rem;">@v.Status</span>
+                        </div>
+                        <div class="text-muted small" style="font-size: 0.75rem;">
+                            <span class="font-monospace fw-semibold text-secondary">@v.RegistrationNumber</span> &bull; @v.VehicleType
+                        </div>
+                        <div class="small text-muted text-truncate mt-1" style="font-size: 0.72rem;">
+                            @if (hasGps && !string.IsNullOrEmpty(v.CurrentLocationName))
+                            {
+                                <i class="bi bi-geo-alt text-primary me-1"></i>@v.CurrentLocationName
+                            }
+                            else
+                            {
+                                <span class="text-muted"><i class="bi bi-geo-slash text-secondary me-1"></i>Live GPS not available</span>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Map Canvas Element -->
+        <div id="fleetMap"></div>
+    </div>
+}
+
+@section Scripts {
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const mapElement = document.getElementById('fleetMap');
+            if (!mapElement) return;
+
+            const sidebarBtn = document.getElementById('toggleMapSidebar');
+            const sidebar = document.getElementById('mapSidebar');
+            if (sidebarBtn && sidebar) {
+                sidebarBtn.addEventListener('click', function () {
+                    sidebar.classList.toggle('show');
+                });
+            }
+
+            // Default neutral center
+            const map = L.map('fleetMap').setView([20, 0], 2);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                maxZoom: 18
+            }).addTo(map);
+
+            const markers = {};
+
+            function getIcon(status) {
+                let pinClass = 'pin-available';
+                let iconName = 'bi-truck';
+
+                if (status === 'Assigned') {
+                    pinClass = 'pin-assigned';
+                    iconName = 'bi-signpost-2-fill';
+                } else if (status === 'UnderMaintenance') {
+                    pinClass = 'pin-maintenance';
+                    iconName = 'bi-tools';
+                }
+
+                return L.divIcon({
+                    className: 'custom-fleet-div-icon',
+                    html: `<div class="custom-fleet-pin ${pinClass}"><i class="bi ${iconName}"></i></div>`,
+                    iconSize: [34, 34],
+                    iconAnchor: [17, 34],
+                    popupAnchor: [0, -34]
+                });
+            }
+
+            fetch('/Vehicles/LocationsJson')
+                .then(response => response.json())
+                .then(data => {
+                    const bounds = [];
+
+                    data.forEach(v => {
+                        // ONLY plot vehicles that actually have recorded GPS coordinates
+                        if (v.hasGps && v.latitude !== null && v.longitude !== null) {
+                            const lat = v.latitude;
+                            const lng = v.longitude;
+                            bounds.push([lat, lng]);
+
+                            const marker = L.marker([lat, lng], { icon: getIcon(v.status) }).addTo(map);
+
+                            const activeTripHtml = v.activeTrip ? `
+                                <div class="p-2 border rounded bg-light mb-2 small">
+                                    <span class="text-muted d-block" style="font-size: 0.68rem;">ACTIVE TRIP:</span>
+                                    <strong>${v.activeTrip.source} &rarr; ${v.activeTrip.destination}</strong>
+                                    <div class="text-muted" style="font-size: 0.7rem;">Driver: ${v.activeTrip.driverName}</div>
+                                </div>
+                            ` : '';
+
+                            const popupContent = `
+                                <div style="min-width: 220px;">
+                                    <div class="p-3 border-bottom" style="background-color: var(--fleet-navy); color: #fff;">
+                                        <div class="fw-bold">${v.vehicleName}</div>
+                                        <div class="small opacity-75">${v.registrationNumber} &bull; ${v.vehicleType}</div>
+                                    </div>
+                                    <div class="p-3">
+                                        <div class="mb-2">
+                                            <span class="badge ${v.status === 'Available' ? 'bg-primary' : (v.status === 'Assigned' ? 'bg-warning text-dark' : 'bg-danger')}">${v.status}</span>
+                                            <span class="text-muted small ms-1">${v.capacity} seats</span>
+                                        </div>
+                                        ${v.locationName ? `<div class="small text-muted mb-2"><i class="bi bi-geo-alt text-primary me-1"></i>${v.locationName}</div>` : ''}
+                                        <div class="small text-muted mb-2">
+                                            <i class="bi bi-speedometer2 me-1"></i>${v.odometer.toLocaleString()} km
+                                        </div>
+                                        ${activeTripHtml}
+                                        <a href="/Vehicles/Details/${v.vehicleId}" class="btn btn-sm btn-primary w-100 py-1" style="background-color: var(--fleet-primary); border-color: var(--fleet-primary); font-size: 0.75rem;">
+                                            Vehicle Details <i class="bi bi-arrow-right"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            `;
+
+                            marker.bindPopup(popupContent);
+                            markers[v.vehicleId] = marker;
+                        }
+                    });
+
+                    if (bounds.length > 0) {
+                        map.fitBounds(bounds, { padding: [50, 50], maxZoom: 14 });
+                    }
+                })
+                .catch(err => console.error('Error loading locations:', err));
+
+            // Click sidebar vehicle to focus on marker if it has coordinates
+            const vehicleItems = document.querySelectorAll('.vehicle-map-item');
+            vehicleItems.forEach(item => {
+                item.addEventListener('click', function () {
+                    vehicleItems.forEach(i => i.classList.remove('active'));
+                    this.classList.add('active');
+
+                    const id = parseInt(this.getAttribute('data-id'));
+                    const hasGps = this.getAttribute('data-has-gps') === 'true';
+
+                    if (hasGps && markers[id]) {
+                        const lat = parseFloat(this.getAttribute('data-lat'));
+                        const lng = parseFloat(this.getAttribute('data-lng'));
+                        map.setView([lat, lng], 14, { animate: true });
+                        markers[id].openPopup();
+                    }
+
+                    if (window.innerWidth < 992 && sidebar) {
+                        sidebar.classList.remove('show');
+                    }
+                });
+            });
+
+            // Client-side search and status filter
+            const searchInput = document.getElementById('vehicleSearchInput');
+            const filterChips = document.querySelectorAll('.filter-chip');
+            let currentFilter = 'All';
+
+            function applyFilters() {
+                const term = searchInput ? searchInput.value.toLowerCase().trim() : '';
+
+                vehicleItems.forEach(item => {
+                    const status = item.getAttribute('data-status');
+                    const name = item.getAttribute('data-name');
+                    const reg = item.getAttribute('data-reg');
+
+                    const matchesStatus = currentFilter === 'All' || status === currentFilter;
+                    const matchesSearch = term === '' || name.includes(term) || reg.includes(term);
+
+                    item.style.display = (matchesStatus && matchesSearch) ? 'block' : 'none';
+                });
+            }
+
+            if (searchInput) {
+                searchInput.addEventListener('input', applyFilters);
+            }
+
+            filterChips.forEach(chip => {
+                chip.addEventListener('click', function () {
+                    filterChips.forEach(c => {
+                        c.classList.remove('active', 'btn-primary', 'btn-warning', 'btn-danger');
+                        c.classList.add('btn-outline-primary', 'btn-outline-warning', 'btn-outline-danger');
+                    });
+                    this.classList.add('active', 'btn-primary');
+                    this.classList.remove('btn-outline-primary', 'btn-outline-warning', 'btn-outline-danger');
+
+                    currentFilter = this.getAttribute('data-filter');
+                    applyFilters();
+                });
+            });
+        });
+    </script>
+}

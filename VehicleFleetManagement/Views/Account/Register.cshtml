@@ -1,7 +1,6 @@
 @model VehicleFleetManagement.ViewModels.RegisterViewModel
 @{
     ViewData["Title"] = "Create Account - FleetFlow Pro";
-    bool isGoogleConfigured = ViewBag.IsGoogleConfigured ?? false;
 }
 
 <div class="container py-4 py-md-5">
@@ -11,11 +10,11 @@
                 
                 <!-- Brand Header -->
                 <div class="text-center mb-4">
-                    <div class="d-inline-flex align-items-center justify-content-center p-3 rounded-circle mb-3" style="background-color: var(--fleet-teal-subtle); color: var(--fleet-teal);">
+                    <div class="d-inline-flex align-items-center justify-content-center p-3 rounded-circle mb-3" style="background-color: var(--fleet-primary-light); color: var(--fleet-primary);">
                         <i class="bi bi-person-plus-fill display-6"></i>
                     </div>
-                    <h3 class="fw-bold text-dark mb-1">Join FleetFlow <span class="brand-badge">PRO</span></h3>
-                    <p class="text-muted small">Create your commercial fleet operations account</p>
+                    <h3 class="fw-bold text-dark mb-1">Create Account</h3>
+                    <p class="text-muted small">Sign up for an organizational staff transportation account</p>
                 </div>
 
                 @if (!ViewData.ModelState.IsValid && ViewData.ModelState[string.Empty] != null)
@@ -27,26 +26,6 @@
                     </div>
                 }
 
-                <!-- Google OAuth Sign-up Option -->
-                <form asp-controller="Account" asp-action="ExternalLogin" asp-route-returnUrl="@ViewData["ReturnUrl"]" method="post" class="mb-3">
-                    @Html.AntiForgeryToken()
-                    <input type="hidden" name="provider" value="Google" />
-                    <button type="submit" class="btn btn-google py-2 w-100 shadow-sm">
-                        <svg class="me-2" width="18" height="18" viewBox="0 0 48 48">
-                            <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
-                            <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
-                            <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
-                            <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
-                        </svg>
-                        <span>Sign up with Google</span>
-                    </button>
-                </form>
-
-                <div class="position-relative text-center my-3">
-                    <hr class="text-muted" />
-                    <span class="position-absolute top-50 start-50 translate-middle bg-white px-3 text-muted small fw-semibold">or register with email</span>
-                </div>
-
                 <!-- Registration Form -->
                 <form asp-controller="Account" asp-action="Register" asp-route-returnUrl="@ViewData["ReturnUrl"]" method="post" id="registerForm">
                     @Html.AntiForgeryToken()
@@ -56,7 +35,7 @@
                             <label asp-for="FullName" class="form-label small fw-semibold text-dark"></label>
                             <div class="input-group">
                                 <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-person"></i></span>
-                                <input asp-for="FullName" class="form-control border-start-0" placeholder="Arthur Morgan" required />
+                                <input asp-for="FullName" class="form-control border-start-0" placeholder="Full Name" required />
                             </div>
                             <span asp-validation-for="FullName" class="text-danger small"></span>
                         </div>
@@ -64,7 +43,7 @@
                             <label asp-for="PhoneNumber" class="form-label small fw-semibold text-dark"></label>
                             <div class="input-group">
                                 <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-telephone"></i></span>
-                                <input asp-for="PhoneNumber" class="form-control border-start-0" placeholder="+1-555-0199" required />
+                                <input asp-for="PhoneNumber" class="form-control border-start-0" placeholder="+1-555-0100" required />
                             </div>
                             <span asp-validation-for="PhoneNumber" class="text-danger small"></span>
                         </div>
@@ -74,50 +53,16 @@
                         <label asp-for="Email" class="form-label small fw-semibold text-dark"></label>
                         <div class="input-group">
                             <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-envelope"></i></span>
-                            <input asp-for="Email" class="form-control border-start-0" placeholder="arthur@fleet.com" autocomplete="email" required />
+                            <input asp-for="Email" class="form-control border-start-0" placeholder="your.name@company.com" autocomplete="email" required />
                         </div>
                         <span asp-validation-for="Email" class="text-danger small"></span>
                     </div>
 
-                    <!-- Role Selection (Strictly Driver or User) -->
-                    <div class="mb-3">
-                        <label asp-for="Role" class="form-label small fw-semibold text-dark d-block"></label>
-                        <div class="row g-2">
-                            <div class="col-6">
-                                <input type="radio" class="btn-check" name="Role" id="roleUser" value="User" @(Model.Role == "User" || string.IsNullOrEmpty(Model.Role) ? "checked" : "") onchange="toggleDriverFields(false)" />
-                                <label class="btn btn-outline-secondary w-100 py-2 d-flex flex-column align-items-center rounded-3" for="roleUser">
-                                    <i class="bi bi-building fs-4 mb-1 text-primary"></i>
-                                    <span class="fw-semibold small">Staff / Client</span>
-                                    <span class="text-muted" style="font-size: 0.7rem;">Directory viewer</span>
-                                </label>
-                            </div>
-                            <div class="col-6">
-                                <input type="radio" class="btn-check" name="Role" id="roleDriver" value="Driver" @(Model.Role == "Driver" ? "checked" : "") onchange="toggleDriverFields(true)" />
-                                <label class="btn btn-outline-secondary w-100 py-2 d-flex flex-column align-items-center rounded-3" for="roleDriver">
-                                    <i class="bi bi-steering-wheel fs-4 mb-1 text-success"></i>
-                                    <span class="fw-semibold small">Fleet Driver</span>
-                                    <span class="text-muted" style="font-size: 0.7rem;">Trip execution & portal</span>
-                                </label>
-                            </div>
-                        </div>
-                        <span asp-validation-for="Role" class="text-danger small"></span>
-                    </div>
-
-                    <!-- Dynamic Driver Details (Visible only when Driver role is selected) -->
-                    <div id="driverFieldsSection" class="@(Model.Role == "Driver" ? "" : "d-none") p-3 rounded-3 mb-3 bg-light border">
-                        <div class="fw-semibold small text-dark mb-2 d-flex align-items-center">
-                            <i class="bi bi-card-checklist text-success me-2"></i> Driver Credentials
-                        </div>
-                        <div class="mb-2">
-                            <label asp-for="LicenseNumber" class="form-label small fw-semibold text-dark"></label>
-                            <input asp-for="LicenseNumber" class="form-control" placeholder="e.g. DL-98765-NY" />
-                            <span asp-validation-for="LicenseNumber" class="text-danger small"></span>
-                        </div>
-                        <div>
-                            <label asp-for="Address" class="form-label small fw-semibold text-dark"></label>
-                            <input asp-for="Address" class="form-control" placeholder="e.g. 742 Evergreen Terrace, Springfield" />
-                            <span asp-validation-for="Address" class="text-danger small"></span>
-                        </div>
+                    <!-- Role Default: Normal User Account -->
+                    <input type="hidden" name="Role" value="User" />
+                    <div class="p-2 mb-3 rounded-3 bg-light border text-muted small d-flex align-items-center">
+                        <i class="bi bi-info-circle-fill text-primary me-2 fs-5"></i>
+                        <span>Registering as an organizational staff member. (Driver accounts are created and managed by Fleet Administrators).</span>
                     </div>
 
                     <!-- Password with Live Strength Meter -->
@@ -130,11 +75,11 @@
                                 <i class="bi bi-eye"></i>
                             </button>
                         </div>
-                        <div class="strength-bar">
-                            <div class="strength-bar-fill" id="strengthBarFill"></div>
+                        <div class="strength-bar mt-1" style="height: 4px; background-color: #e2e8f0; border-radius: 2px; overflow: hidden;">
+                            <div id="strengthBarFill" style="height: 100%; width: 0%; transition: all 0.3s ease;"></div>
                         </div>
                         <div class="d-flex justify-content-between align-items-center mt-1">
-                            <small class="text-muted" style="font-size: 0.7rem;">Min 6 characters</small>
+                            <small class="text-muted" style="font-size: 0.7rem;">Minimum 6 characters</small>
                             <small id="strengthText" class="fw-semibold" style="font-size: 0.7rem;"></small>
                         </div>
                         <span asp-validation-for="Password" class="text-danger small"></span>
@@ -155,7 +100,7 @@
                     <div class="form-check mb-4">
                         <input asp-for="AgreeToTerms" class="form-check-input" type="checkbox" id="termsCheck" required />
                         <label asp-for="AgreeToTerms" class="form-check-label small text-muted" for="termsCheck">
-                            I accept the <a href="javascript:void(0)" class="text-decoration-none">Terms of Service</a> and <a href="javascript:void(0)" class="text-decoration-none">Privacy Policy</a>
+                            I accept the Terms of Service and Fleet Policy
                         </label>
                         <span asp-validation-for="AgreeToTerms" class="text-danger small d-block"></span>
                     </div>
@@ -170,7 +115,7 @@
                 <div class="text-center mt-4 pt-3 border-top">
                     <p class="text-muted small mb-0">
                         Already have an account? 
-                        <a asp-controller="Account" asp-action="Login" asp-route-returnUrl="@ViewData["ReturnUrl"]" class="fw-semibold text-decoration-none" style="color: var(--fleet-teal);">Sign in instead</a>
+                        <a asp-controller="Account" asp-action="Login" asp-route-returnUrl="@ViewData["ReturnUrl"]" class="fw-semibold text-decoration-none" style="color: var(--fleet-primary);">Sign in instead</a>
                     </p>
                 </div>
             </div>
@@ -181,15 +126,6 @@
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script>
-        function toggleDriverFields(isDriver) {
-            const section = document.getElementById('driverFieldsSection');
-            if (isDriver) {
-                section.classList.remove('d-none');
-            } else {
-                section.classList.add('d-none');
-            }
-        }
-
         function togglePassVisibility(inputId, btn) {
             const input = document.getElementById(inputId);
             const icon = btn.querySelector('i');
@@ -201,8 +137,6 @@
         function checkStrength(password) {
             const bar = document.getElementById('strengthBarFill');
             const label = document.getElementById('strengthText');
-            
-            bar.className = 'strength-bar-fill';
             
             if (!password) {
                 bar.style.width = '0%';
@@ -218,28 +152,33 @@
             if (/[^A-Za-z0-9]/.test(password)) score++;
 
             if (score <= 2) {
-                bar.classList.add('strength-weak');
+                bar.style.width = '33%';
+                bar.style.backgroundColor = '#ef4444';
                 label.innerText = 'Weak';
                 label.style.color = '#ef4444';
             } else if (score <= 4) {
-                bar.classList.add('strength-medium');
+                bar.style.width = '66%';
+                bar.style.backgroundColor = '#f59e0b';
                 label.innerText = 'Good';
                 label.style.color = '#f59e0b';
             } else {
-                bar.classList.add('strength-strong');
+                bar.style.width = '100%';
+                bar.style.backgroundColor = '#2563eb';
                 label.innerText = 'Strong';
-                label.style.color = '#10b981';
+                label.style.color = '#2563eb';
             }
         }
 
         const regForm = document.getElementById('registerForm');
-        regForm.addEventListener('submit', function () {
-            if ($(regForm).valid()) {
-                document.getElementById('btnRegText').classList.add('d-none');
-                document.getElementById('btnRegSpinner').classList.remove('d-none');
-                document.getElementById('btnRegSpinnerText').classList.remove('d-none');
-                document.getElementById('submitRegBtn').setAttribute('disabled', 'disabled');
-            }
-        });
+        if (regForm) {
+            regForm.addEventListener('submit', function () {
+                if ($(regForm).valid()) {
+                    document.getElementById('btnRegText').classList.add('d-none');
+                    document.getElementById('btnRegSpinner').classList.remove('d-none');
+                    document.getElementById('btnRegSpinnerText').classList.remove('d-none');
+                    document.getElementById('submitRegBtn').setAttribute('disabled', 'disabled');
+                }
+            });
+        }
     </script>
 }

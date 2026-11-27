@@ -233,4 +233,5 @@ C:\Users\arava\OneDrive\Desktop\C#pro\VehicleFleetManagement\bin\Debug\net10.0\S
 C:\Users\arava\OneDrive\Desktop\C#pro\VehicleFleetManagement\bin\Debug\net10.0\runtimes\win\lib\net10.0\System.Security.Cryptography.Pkcs.dll
 C:\Users\arava\OneDrive\Desktop\C#pro\VehicleFleetManagement\bin\Debug\net10.0\FleetFlow_Postman_Collection.json
 C:\Users\arava\OneDrive\Desktop\C#pro\VehicleFleetManagement\bin\Debug\net10.0\Microsoft.AspNetCore.Authentication.Google.dll
-C:\Users\arava\OneDrive\Desktop\C#pro\VehicleFleetManagement\obj\Debug\net10.0\compressed\8kdlizx2rk-{0}-cm220k7h57-cm220k7h57.gz
+C:\Users\arava\OneDrive\Desktop\C#pro\VehicleFleetManagement\obj\Debug\net10.0\VehicleFleetManagement.sourcelink.json
+C:\Users\arava\OneDrive\Desktop\C#pro\VehicleFleetManagement\obj\Debug\net10.0\compressed\8kdlizx2rk-{0}-0iiaqbatby-0iiaqbatby.gz

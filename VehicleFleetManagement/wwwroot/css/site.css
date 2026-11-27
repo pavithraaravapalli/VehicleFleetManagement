@@ -1,84 +1,235 @@
 /* ===================================================================
-   FleetFlow Pro - Modern Commercial SaaS Design System
-   Palette: Modern Navy Blue (#0F172A, #1E293B) | Primary Teal (#0D9488, #14B8A6)
-            Accent Amber (#F59E0B) | Background Slate (#F8FAFC)
+   FleetFlow PRO - Enterprise Commercial SaaS Design System
+   Palette:
+     - Deep Navy:  #14213D
+     - Royal Blue: #2563EB (Primary Action)
+     - Light Blue: #DBEAFE (Subtle Accents)
+     - White:      #FFFFFF
+     - Background: #F8FAFC
+     - Slate Grey: #64748B
+     - Border:     #E2E8F0
    =================================================================== */
 
 :root {
-    --fleet-navy-dark: #0f172a;
-    --fleet-navy: #1e293b;
-    --fleet-navy-light: #334155;
-    --fleet-teal: #0d9488;
-    --fleet-teal-light: #14b8a6;
-    --fleet-teal-subtle: #ccfbf1;
-    --fleet-amber: #f59e0b;
+    --fleet-navy: #14213d;
+    --fleet-navy-dark: #0b1324;
+    --fleet-primary: #2563eb;
+    --fleet-primary-hover: #1d4ed8;
+    --fleet-primary-light: #dbeafe;
+    --fleet-primary-subtle: #eff6ff;
     --fleet-bg: #f8fafc;
     --fleet-card-bg: #ffffff;
-    --fleet-text-main: #1e293b;
+    --fleet-text-main: #14213d;
     --fleet-text-muted: #64748b;
     --fleet-border: #e2e8f0;
-    --fleet-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-    --fleet-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
-    --fleet-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.03);
-    --fleet-radius: 12px;
+    --fleet-border-focus: #2563eb;
+    
+    --fleet-sidebar-width: 260px;
+    --fleet-sidebar-bg: #14213d;
+    --fleet-sidebar-text: #94a3b8;
+    --fleet-sidebar-hover: rgba(255, 255, 255, 0.08);
+    --fleet-sidebar-active: #2563eb;
+
+    --fleet-shadow-sm: 0 1px 2px 0 rgba(20, 33, 61, 0.05);
+    --fleet-shadow: 0 4px 6px -1px rgba(20, 33, 61, 0.07), 0 2px 4px -2px rgba(20, 33, 61, 0.04);
+    --fleet-shadow-lg: 0 10px 15px -3px rgba(20, 33, 61, 0.08), 0 4px 6px -4px rgba(20, 33, 61, 0.03);
+    --fleet-radius: 10px;
 }
 
+/* Base Setup */
 body {
     background-color: var(--fleet-bg);
     color: var(--fleet-text-main);
     font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     min-height: 100vh;
-    display: flex;
-    flex-direction: column;
+    margin: 0;
+    padding: 0;
     letter-spacing: -0.011em;
 }
 
-/* ==========================================
-   Navigation Bar & Brand
-   ========================================== */
-.navbar-fleet {
-    background-color: var(--fleet-navy-dark);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+/* ===================================================================
+   SaaS Layout Shell: Sidebar + Top Navigation + Main Content
+   =================================================================== */
+.saas-layout {
+    display: flex;
+    min-height: 100vh;
+    width: 100%;
 }
 
-.navbar-fleet .navbar-brand {
-    font-weight: 700;
-    font-size: 1.25rem;
+/* Sidebar */
+.saas-sidebar {
+    width: var(--fleet-sidebar-width);
+    background-color: var(--fleet-sidebar-bg);
     color: #ffffff;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.25s ease-in-out, width 0.25s ease-in-out;
+    z-index: 1040;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    border-right: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.saas-sidebar-brand {
+    padding: 1.25rem 1.25rem;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    text-decoration: none;
+    color: #ffffff;
+}
+
+.saas-sidebar-brand:hover {
+    color: #ffffff;
+}
+
+.saas-sidebar-brand .brand-icon {
+    width: 36px;
+    height: 36px;
+    background-color: var(--fleet-primary);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    font-size: 1.15rem;
+    margin-right: 0.75rem;
+}
+
+.saas-sidebar-brand .brand-title {
+    font-weight: 700;
+    font-size: 1.2rem;
     letter-spacing: -0.02em;
 }
 
-.navbar-fleet .nav-link {
-    color: rgba(255, 255, 255, 0.8);
-    font-weight: 500;
-    font-size: 0.925rem;
-    padding: 0.5rem 0.85rem;
-    border-radius: 8px;
-    transition: all 0.2s ease;
-}
-
-.navbar-fleet .nav-link:hover,
-.navbar-fleet .nav-link.active {
-    color: #ffffff;
-    background-color: rgba(255, 255, 255, 0.08);
-}
-
 .brand-badge {
-    background-color: var(--fleet-teal);
+    background-color: var(--fleet-primary);
     color: #ffffff;
     font-size: 0.65rem;
     font-weight: 700;
-    padding: 3px 6px;
-    border-radius: 6px;
+    padding: 2px 6px;
+    border-radius: 4px;
     letter-spacing: 0.05em;
     vertical-align: middle;
 }
 
-/* ==========================================
-   Modern SaaS Cards
-   ========================================== */
-.card-modern {
+.saas-sidebar-menu {
+    padding: 1rem 0.75rem;
+    flex-grow: 1;
+}
+
+.saas-menu-category {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: #64748b;
+    padding: 0.75rem 0.75rem 0.35rem 0.75rem;
+    letter-spacing: 0.06em;
+}
+
+.saas-nav-link {
+    display: flex;
+    align-items: center;
+    padding: 0.55rem 0.85rem;
+    color: var(--fleet-sidebar-text);
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-decoration: none;
+    border-radius: 8px;
+    margin-bottom: 3px;
+    transition: all 0.15s ease-in-out;
+}
+
+.saas-nav-link i {
+    font-size: 1.1rem;
+    margin-right: 0.75rem;
+    width: 20px;
+    text-align: center;
+}
+
+.saas-nav-link:hover {
+    color: #ffffff;
+    background-color: var(--fleet-sidebar-hover);
+}
+
+.saas-nav-link.active {
+    color: #ffffff;
+    background-color: var(--fleet-primary);
+    font-weight: 600;
+}
+
+.saas-sidebar-footer {
+    padding: 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Main Area */
+.saas-main {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    background-color: var(--fleet-bg);
+}
+
+/* Topbar */
+.saas-topbar {
+    height: 64px;
+    background-color: #ffffff;
+    border-bottom: 1px solid var(--fleet-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 1.5rem;
+    position: sticky;
+    top: 0;
+    z-index: 1030;
+    box-shadow: var(--fleet-shadow-sm);
+}
+
+.saas-content {
+    flex-grow: 1;
+    padding: 1.75rem 2rem;
+}
+
+/* Mobile Sidebar Drawer */
+@media (max-width: 991.98px) {
+    .saas-sidebar {
+        position: fixed;
+        left: -260px;
+        top: 0;
+        bottom: 0;
+        box-shadow: 4px 0 15px rgba(0, 0, 0, 0.2);
+    }
+    .saas-sidebar.show {
+        left: 0;
+        transform: none;
+    }
+    .saas-sidebar-backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(20, 33, 61, 0.4);
+        z-index: 1035;
+        display: none;
+    }
+    .saas-sidebar-backdrop.show {
+        display: block;
+    }
+    .saas-content {
+        padding: 1rem 1rem;
+    }
+}
+
+/* ===================================================================
+   Cards & Surface Design
+   =================================================================== */
+.card-modern, .card-custom {
     background-color: var(--fleet-card-bg);
     border: 1px solid var(--fleet-border);
     border-radius: var(--fleet-radius);
@@ -87,8 +238,8 @@ body {
     overflow: hidden;
 }
 
-.card-modern.card-hover:hover {
-    transform: translateY(-3px);
+.card-modern.card-hover:hover, .hover-elevate:hover {
+    transform: translateY(-2px);
     box-shadow: var(--fleet-shadow-lg);
 }
 
@@ -98,8 +249,6 @@ body {
     border: 1px solid var(--fleet-border);
     padding: 1.25rem;
     box-shadow: var(--fleet-shadow);
-    position: relative;
-    overflow: hidden;
     transition: transform 0.2s ease;
 }
 
@@ -110,46 +259,79 @@ body {
 .card-stat .stat-icon-wrapper {
     width: 48px;
     height: 48px;
-    border-radius: 12px;
+    border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 1.35rem;
 }
 
-/* ==========================================
-   Modern Buttons
-   ========================================== */
-.btn-fleet-primary {
-    background-color: var(--fleet-teal);
-    border-color: var(--fleet-teal);
-    color: #ffffff;
+/* ===================================================================
+   Buttons
+   =================================================================== */
+.btn-primary {
+    background-color: var(--fleet-primary) !important;
+    border-color: var(--fleet-primary) !important;
+    color: #ffffff !important;
+    font-weight: 600;
+}
+
+.btn-primary:hover, .btn-primary:focus {
+    background-color: var(--fleet-primary-hover) !important;
+    border-color: var(--fleet-primary-hover) !important;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+}
+
+.btn-outline-primary {
+    color: var(--fleet-primary) !important;
+    border-color: var(--fleet-primary) !important;
+}
+
+.btn-outline-primary:hover, .btn-outline-primary:focus {
+    background-color: var(--fleet-primary) !important;
+    color: #ffffff !important;
+}
+
+.btn-fleet-primary, .btn-fleet-teal {
+    background-color: var(--fleet-primary) !important;
+    border-color: var(--fleet-primary) !important;
+    color: #ffffff !important;
     font-weight: 600;
     border-radius: 8px;
     padding: 0.55rem 1.25rem;
     transition: all 0.2s ease;
 }
 
-.btn-fleet-primary:hover, .btn-fleet-primary:focus {
-    background-color: #0b7269;
-    border-color: #0b7269;
-    color: #ffffff;
-    box-shadow: 0 4px 12px rgba(13, 148, 136, 0.25);
+.btn-fleet-primary:hover, .btn-fleet-teal:hover {
+    background-color: var(--fleet-primary-hover) !important;
+    border-color: var(--fleet-primary-hover) !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
 }
 
-.btn-fleet-navy {
+.btn-navy {
     background-color: var(--fleet-navy);
     border-color: var(--fleet-navy);
     color: #ffffff;
     font-weight: 600;
-    border-radius: 8px;
-    padding: 0.55rem 1.25rem;
 }
 
-.btn-fleet-navy:hover {
+.btn-navy:hover {
     background-color: var(--fleet-navy-dark);
     border-color: var(--fleet-navy-dark);
     color: #ffffff;
+}
+
+.btn-light-blue {
+    background-color: var(--fleet-primary-light);
+    color: #1e40af;
+    font-weight: 600;
+    border: 1px solid #bfdbfe;
+}
+
+.btn-light-blue:hover {
+    background-color: #bfdbfe;
+    color: #1e3a8a;
 }
 
 .btn-google {
@@ -173,56 +355,55 @@ body {
     color: #202124;
 }
 
-/* ==========================================
-   Modern Driver Avatar & Badges
-   ========================================== */
+/* ===================================================================
+   Avatars & Star Rating
+   =================================================================== */
 .avatar-circle {
-    width: 44px;
-    height: 44px;
+    width: 42px;
+    height: 42px;
     border-radius: 50%;
     object-fit: cover;
     border: 2px solid #ffffff;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
 }
 
 .avatar-circle-lg {
-    width: 96px;
-    height: 96px;
+    width: 90px;
+    height: 90px;
     border-radius: 50%;
     object-fit: cover;
-    border: 4px solid #ffffff;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    border: 3px solid #ffffff;
+    box-shadow: 0 4px 12px rgba(20, 33, 61, 0.12);
 }
 
 .avatar-placeholder {
-    width: 44px;
-    height: 44px;
+    width: 42px;
+    height: 42px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--fleet-teal), var(--fleet-navy));
+    background: linear-gradient(135deg, var(--fleet-primary), var(--fleet-navy));
     color: #ffffff;
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: 700;
-    font-size: 1.1rem;
+    font-size: 1rem;
 }
 
 .avatar-placeholder-lg {
-    width: 96px;
-    height: 96px;
+    width: 90px;
+    height: 90px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--fleet-teal), var(--fleet-navy));
+    background: linear-gradient(135deg, var(--fleet-primary), var(--fleet-navy));
     color: #ffffff;
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: 700;
-    font-size: 2.25rem;
-    border: 4px solid #ffffff;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    font-size: 2rem;
+    border: 3px solid #ffffff;
+    box-shadow: 0 4px 12px rgba(20, 33, 61, 0.12);
 }
 
-/* Star Rating Component */
 .star-rating {
     color: #f59e0b;
     font-size: 0.95rem;
@@ -239,7 +420,26 @@ body {
     color: #f59e0b;
 }
 
-/* Password Strength Meter */
+/* ===================================================================
+   Status Badges (No Green, Professional Royal/Slate Theme)
+   =================================================================== */
+.badge-status {
+    padding: 0.35rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.badge-available { background-color: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+.badge-ontrip { background-color: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
+.badge-unavailable { background-color: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+.badge-onleave { background-color: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
+.badge-maintenance { background-color: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+
+/* Strength meter */
 .strength-bar {
     height: 4px;
     border-radius: 2px;
@@ -256,43 +456,30 @@ body {
 
 .strength-weak { width: 33%; background-color: #ef4444; }
 .strength-medium { width: 66%; background-color: #f59e0b; }
-.strength-strong { width: 100%; background-color: #10b981; }
+.strength-strong { width: 100%; background-color: #2563eb; }
 
-/* Status Badges */
-.badge-status {
-    padding: 0.35rem 0.75rem;
-    border-radius: 20px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-}
-
-.badge-available { background-color: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
-.badge-ontrip { background-color: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
-.badge-unavailable { background-color: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
-.badge-onleave { background-color: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
-.badge-maintenance { background-color: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
-
-/* Notification Dropdown */
+/* Notification Center */
 .notification-bell-btn {
     position: relative;
-    padding: 0.45rem 0.75rem;
-    color: rgba(255, 255, 255, 0.85);
+    padding: 0.5rem;
+    color: var(--fleet-text-muted);
     border-radius: 8px;
-    transition: background-color 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    text-decoration: none;
 }
 
 .notification-bell-btn:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-    color: #ffffff;
+    background-color: var(--fleet-primary-light);
+    color: var(--fleet-primary);
 }
 
 .notification-count-badge {
     position: absolute;
     top: 2px;
-    right: 4px;
+    right: 2px;
     background-color: #ef4444;
     color: #ffffff;
     font-size: 0.65rem;
@@ -303,7 +490,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 2px solid var(--fleet-navy-dark);
+    border: 2px solid #ffffff;
 }
 
 .dropdown-notifications {
@@ -320,11 +507,28 @@ body {
     z-index: 1080;
 }
 
+/* ===================================================================
+   Fleet Map Container
+   =================================================================== */
+#fleetMap {
+    height: 600px;
+    width: 100%;
+    border-radius: var(--fleet-radius);
+    border: 1px solid var(--fleet-border);
+    box-shadow: var(--fleet-shadow);
+    z-index: 1;
+}
+
+.map-vehicle-card {
+    min-width: 200px;
+    font-size: 0.85rem;
+}
+
 /* Footer Styling */
 .footer-fleet {
     background-color: #ffffff;
     border-top: 1px solid var(--fleet-border);
-    margin-top: auto;
-    font-size: 0.875rem;
+    padding: 1rem 2rem;
+    font-size: 0.85rem;
     color: var(--fleet-text-muted);
 }

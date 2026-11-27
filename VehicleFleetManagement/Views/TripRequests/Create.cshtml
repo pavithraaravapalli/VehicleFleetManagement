@@ -1,0 +1,132 @@
+@model VehicleFleetManagement.ViewModels.CreateTripRequestViewModel
+@{
+    ViewData["Title"] = "Request Transport";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-9 col-xl-8">
+        <div class="d-flex align-items-center mb-4">
+            <a asp-action="Index" class="btn btn-outline-secondary btn-sm me-3">
+                <i class="bi bi-arrow-left"></i>
+            </a>
+            <div>
+                <h3 class="fw-bold mb-1" style="color: var(--fleet-navy);">
+                    <i class="bi bi-calendar2-plus me-2" style="color: var(--fleet-primary);"></i>Submit Transport Booking Request
+                </h3>
+                <p class="text-muted small mb-0">Fill in travel details to request a fleet vehicle and qualified driver for official business.</p>
+            </div>
+        </div>
+
+        <div class="card-modern">
+            <div class="p-4 p-md-5">
+                <form asp-action="Create" method="post">
+                    @Html.AntiForgeryToken()
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small mb-4" role="alert"></div>
+
+                    <!-- Section: Route Information -->
+                    <div class="mb-4">
+                        <h6 class="fw-bold text-uppercase text-muted small mb-3">
+                            <i class="bi bi-map me-1 text-primary"></i> 1. Route Coordinates
+                        </h6>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label asp-for="Source" class="form-label small fw-semibold text-dark"></label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light text-danger border-end-0"><i class="bi bi-geo-alt-fill"></i></span>
+                                    <input asp-for="Source" class="form-control border-start-0" placeholder="e.g. Headquarters Campus Terminal" />
+                                </div>
+                                <span asp-validation-for="Source" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="Destination" class="form-label small fw-semibold text-dark"></label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light text-primary border-end-0"><i class="bi bi-flag-fill"></i></span>
+                                    <input asp-for="Destination" class="form-control border-start-0" placeholder="e.g. Regional Airport Terminal 2" />
+                                </div>
+                                <span asp-validation-for="Destination" class="text-danger small"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="my-4 text-muted opacity-25">
+
+                    <!-- Section: Schedule & Telemetry -->
+                    <div class="mb-4">
+                        <h6 class="fw-bold text-uppercase text-muted small mb-3">
+                            <i class="bi bi-clock-history me-1 text-primary"></i> 2. Travel Schedule
+                        </h6>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label asp-for="StartDate" class="form-label small fw-semibold text-dark"></label>
+                                <input asp-for="StartDate" type="datetime-local" class="form-control" />
+                                <span asp-validation-for="StartDate" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="EstimatedEndDate" class="form-label small fw-semibold text-dark"></label>
+                                <input asp-for="EstimatedEndDate" type="datetime-local" class="form-control" />
+                                <span asp-validation-for="EstimatedEndDate" class="text-danger small"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="my-4 text-muted opacity-25">
+
+                    <!-- Section: Vehicle & Capacity Preferences -->
+                    <div class="mb-4">
+                        <h6 class="fw-bold text-uppercase text-muted small mb-3">
+                            <i class="bi bi-truck me-1 text-primary"></i> 3. Capacity & Vehicle Preference
+                        </h6>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label asp-for="PassengerCount" class="form-label small fw-semibold text-dark"></label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light text-secondary border-end-0"><i class="bi bi-people-fill"></i></span>
+                                    <input asp-for="PassengerCount" type="number" min="1" max="100" class="form-control border-start-0" />
+                                </div>
+                                <span asp-validation-for="PassengerCount" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="PreferredVehicleType" class="form-label small fw-semibold text-dark"></label>
+                                <select asp-for="PreferredVehicleType" class="form-select">
+                                    <option value="Any">Any Suitable Vehicle</option>
+                                    <option value="Sedan">Sedan (Executive Staff)</option>
+                                    <option value="SUV">SUV (Field Operations)</option>
+                                    <option value="Van">Passenger Van (Team Transport)</option>
+                                    <option value="Bus">Transit Bus (Large Group)</option>
+                                    <option value="Truck">Cargo Truck (Material Transport)</option>
+                                </select>
+                                <span asp-validation-for="PreferredVehicleType" class="text-danger small"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="my-4 text-muted opacity-25">
+
+                    <!-- Section: Justification -->
+                    <div class="mb-4">
+                        <h6 class="fw-bold text-uppercase text-muted small mb-3">
+                            <i class="bi bi-card-text me-1 text-primary"></i> 4. Official Justification
+                        </h6>
+                        <div>
+                            <label asp-for="Purpose" class="form-label small fw-semibold text-dark"></label>
+                            <textarea asp-for="Purpose" rows="3" class="form-control" placeholder="Provide detailed purpose of transport (e.g. Client site inspection, executive airport pickup, equipment transfer)"></textarea>
+                            <span asp-validation-for="Purpose" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <!-- Form Submission Buttons -->
+                    <div class="d-flex justify-content-end gap-2 pt-3 border-top">
+                        <a asp-action="Index" class="btn btn-outline-secondary px-4">Cancel</a>
+                        <button type="submit" class="btn btn-primary px-4 shadow-sm" style="background-color: var(--fleet-primary); border-color: var(--fleet-primary);">
+                            <i class="bi bi-send-check me-2"></i> Submit Request
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

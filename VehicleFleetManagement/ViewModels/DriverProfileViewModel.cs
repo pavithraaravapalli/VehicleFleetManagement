@@ -79,5 +79,21 @@ namespace VehicleFleetManagement.ViewModels
 
         // Reviews Collection
         public List<DriverReview> Reviews { get; set; } = new List<DriverReview>();
+
+        // Driver Milestones & Badges
+        public List<DriverAchievement> Achievements { get; set; } = new List<DriverAchievement>();
+    }
+
+    /// <summary>
+    /// Represents a verified performance milestone or professional badge earned by a driver.
+    /// </summary>
+    public class DriverAchievement
+    {
+        public string Title { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public string Icon { get; set; } = string.Empty;
+        public bool IsEarned { get; set; }
+        public string BadgeClass { get; set; } = string.Empty;
+        public string Progress { get; set; } = string.Empty;
     }
 }

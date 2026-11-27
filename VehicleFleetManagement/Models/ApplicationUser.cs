@@ -26,6 +26,7 @@ namespace VehicleFleetManagement.Models
         // Navigation Properties
         public virtual ICollection<Notification> Notifications { get; set; } = new List<Notification>();
         public virtual ICollection<DriverReview> ReviewsWritten { get; set; } = new List<DriverReview>();
+        public virtual ICollection<TripRequest> TripRequests { get; set; } = new List<TripRequest>();
         public virtual Driver? Driver { get; set; }
     }
 }

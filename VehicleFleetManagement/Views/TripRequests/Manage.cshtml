@@ -1,0 +1,203 @@
+@model IEnumerable<VehicleFleetManagement.Models.TripRequest>
+@{
+    ViewData["Title"] = "Manage Transport Requests";
+    var selectedStatus = ViewBag.SelectedStatus as string ?? "All";
+    int pendingCount = ViewBag.PendingCount ?? 0;
+    int currentPage = ViewBag.CurrentPage ?? 1;
+    int totalPages = ViewBag.TotalPages ?? 1;
+    int totalCount = ViewBag.TotalCount ?? 0;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <h2 class="fw-bold mb-1" style="color: var(--fleet-navy);">
+            <i class="bi bi-clipboard-check me-2" style="color: var(--fleet-primary);"></i>Fleet Transport Requests
+        </h2>
+        <p class="text-muted small mb-0">Review booking requests from staff, assign fleet assets & qualified drivers, and dispatch scheduled journeys.</p>
+    </div>
+    @if (pendingCount > 0)
+    {
+        <span class="badge bg-warning text-dark px-3 py-2 fs-6 shadow-sm">
+            <i class="bi bi-bell-fill me-1"></i> @pendingCount Pending Approval
+        </span>
+    }
+</div>
+
+<!-- Status Filter Tabs -->
+<div class="card-modern mb-4 p-2">
+    <div class="nav nav-pills gap-1 flex-wrap">
+        <a asp-action="Manage" asp-route-status="All" class="nav-link btn-sm py-1 px-3 @(selectedStatus == "All" ? "active bg-primary" : "text-secondary")">
+            All Requests
+        </a>
+        <a asp-action="Manage" asp-route-status="Pending" class="nav-link btn-sm py-1 px-3 @(selectedStatus == "Pending" ? "active bg-warning text-dark" : "text-secondary")">
+            <i class="bi bi-hourglass-split me-1"></i> Pending
+            @if (pendingCount > 0)
+            {
+                <span class="badge bg-danger rounded-pill ms-1">@pendingCount</span>
+            }
+        </a>
+        <a asp-action="Manage" asp-route-status="Approved" class="nav-link btn-sm py-1 px-3 @(selectedStatus == "Approved" ? "active bg-primary" : "text-secondary")">
+            <i class="bi bi-check2-circle me-1"></i> Approved
+        </a>
+        <a asp-action="Manage" asp-route-status="Rejected" class="nav-link btn-sm py-1 px-3 @(selectedStatus == "Rejected" ? "active bg-danger" : "text-secondary")">
+            <i class="bi bi-x-circle me-1"></i> Rejected
+        </a>
+        <a asp-action="Manage" asp-route-status="Cancelled" class="nav-link btn-sm py-1 px-3 @(selectedStatus == "Cancelled" ? "active bg-secondary" : "text-secondary")">
+            Cancelled
+        </a>
+    </div>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="card-modern p-5 text-center my-4">
+        <div class="avatar-placeholder mx-auto mb-3" style="width: 56px; height: 56px; background-color: var(--fleet-primary-light); color: var(--fleet-primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+            <i class="bi bi-inbox"></i>
+        </div>
+        <h5 class="fw-bold text-dark">No Requests Found</h5>
+        <p class="text-muted small">No trip requests match the selected status filter (@selectedStatus).</p>
+    </div>
+}
+else
+{
+    <div class="card-modern">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-4">Request #</th>
+                        <th>Requester</th>
+                        <th>Route</th>
+                        <th>Dates</th>
+                        <th>Pass. / Pref</th>
+                        <th>Status</th>
+                        <th>Assigned Trip</th>
+                        <th class="text-end pe-4">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td class="ps-4 fw-semibold text-dark">
+                                #@item.TripRequestId
+                                <div class="text-muted small" style="font-size: 0.72rem;">@item.CreatedAt.ToString("MMM dd, yyyy")</div>
+                            </td>
+                            <td>
+                                <div class="fw-semibold text-dark small">@(item.User?.FullName ?? "Unknown User")</div>
+                                <div class="text-muted small" style="font-size: 0.75rem;">@item.User?.Email</div>
+                            </td>
+                            <td>
+                                <div class="small fw-medium text-dark">
+                                    <i class="bi bi-geo-alt-fill text-danger me-1"></i>@item.Source
+                                </div>
+                                <div class="small text-muted">
+                                    <i class="bi bi-flag-fill text-primary me-1"></i>@item.Destination
+                                </div>
+                            </td>
+                            <td>
+                                <div class="small text-dark fw-medium">@item.StartDate.ToString("MMM dd, yyyy HH:mm")</div>
+                                <div class="small text-muted">Ret: @item.EstimatedEndDate.ToString("MMM dd, yyyy HH:mm")</div>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark border">@item.PassengerCount pax</span>
+                                @if (!string.IsNullOrEmpty(item.PreferredVehicleType) && item.PreferredVehicleType != "Any")
+                                {
+                                    <div class="small text-muted" style="font-size: 0.7rem;">@item.PreferredVehicleType</div>
+                                }
+                            </td>
+                            <td>
+                                @if (item.Status == VehicleFleetManagement.Models.TripRequestStatus.Pending)
+                                {
+                                    <span class="badge bg-warning text-dark px-2 py-1"><i class="bi bi-hourglass-split me-1"></i>Pending</span>
+                                }
+                                else if (item.Status == VehicleFleetManagement.Models.TripRequestStatus.Approved)
+                                {
+                                    <span class="badge bg-primary px-2 py-1"><i class="bi bi-check2-circle me-1"></i>Approved</span>
+                                }
+                                else if (item.Status == VehicleFleetManagement.Models.TripRequestStatus.Rejected)
+                                {
+                                    <span class="badge bg-danger px-2 py-1"><i class="bi bi-x-circle me-1"></i>Rejected</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary px-2 py-1">@item.Status</span>
+                                }
+                            </td>
+                            <td>
+                                @if (item.ApprovedTripId.HasValue && item.ApprovedTrip != null)
+                                {
+                                    <a asp-controller="Trips" asp-action="Details" asp-route-id="@item.ApprovedTripId" class="badge bg-light text-primary border text-decoration-none py-1 px-2">
+                                        <i class="bi bi-signpost-2 me-1"></i>Trip #@item.ApprovedTripId.Value
+                                    </a>
+                                }
+                                else
+                                {
+                                    <span class="text-muted small">None</span>
+                                }
+                            </td>
+                            <td class="text-end pe-4">
+                                <div class="d-inline-flex gap-1">
+                                    <a asp-action="Details" asp-route-id="@item.TripRequestId" class="btn btn-sm btn-outline-secondary" title="Details">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    @if (item.Status == VehicleFleetManagement.Models.TripRequestStatus.Pending)
+                                    {
+                                        <a asp-action="Approve" asp-route-id="@item.TripRequestId" class="btn btn-sm btn-primary" style="background-color: var(--fleet-primary); border-color: var(--fleet-primary);" title="Approve & Dispatch">
+                                            <i class="bi bi-check-lg me-1"></i>Approve
+                                        </a>
+                                        <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#rejectModal-@item.TripRequestId" title="Reject">
+                                            <i class="bi bi-x-lg"></i>
+                                        </button>
+
+                                        <!-- Reject Modal -->
+                                        <div class="modal fade" id="rejectModal-@item.TripRequestId" tabindex="-1" aria-hidden="true">
+                                            <div class="modal-dialog modal-dialog-centered">
+                                                <div class="modal-content border-0 shadow">
+                                                    <div class="modal-header bg-light">
+                                                        <h6 class="modal-title fw-bold text-dark">Reject Request #@item.TripRequestId</h6>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                    </div>
+                                                    <form asp-action="Reject" method="post">
+                                                        @Html.AntiForgeryToken()
+                                                        <input type="hidden" name="tripRequestId" value="@item.TripRequestId" />
+                                                        <div class="modal-body text-start">
+                                                            <p class="small text-muted mb-3">Please specify the reason for rejecting this transport request. This explanation will be logged and emailed to the requester.</p>
+                                                            <label class="form-label small fw-semibold text-dark">Rejection Reason</label>
+                                                            <textarea name="reason" rows="3" class="form-control" placeholder="e.g. No vehicles matching capacity available during this time slot; Please reschedule." required></textarea>
+                                                        </div>
+                                                        <div class="modal-footer bg-light">
+                                                            <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                            <button type="submit" class="btn btn-sm btn-danger">Confirm Rejection</button>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @if (totalPages > 1)
+        {
+            <div class="p-3 border-top d-flex justify-content-between align-items-center">
+                <span class="text-muted small">Showing Page @currentPage of @totalPages (@totalCount records)</span>
+                <nav>
+                    <ul class="pagination pagination-sm mb-0">
+                        @for (int p = 1; p <= totalPages; p++)
+                        {
+                            <li class="page-item @(p == currentPage ? "active" : "")">
+                                <a class="page-link" asp-action="Manage" asp-route-status="@selectedStatus" asp-route-page="@p">@p</a>
+                            </li>
+                        }
+                    </ul>
+                </nav>
+            </div>
+        }
+    </div>
+}

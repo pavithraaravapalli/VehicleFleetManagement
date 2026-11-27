@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
 using VehicleFleetManagement.Data;
 using VehicleFleetManagement.Models;
 using VehicleFleetManagement.Services.Interfaces;
@@ -19,11 +20,68 @@ namespace VehicleFleetManagement.Controllers
     public class VehiclesController : Controller
     {
         private readonly IVehicleService _vehicleService;
+        private readonly ApplicationDbContext _context;
         private const int PageSize = 6;
 
-        public VehiclesController(IVehicleService vehicleService)
+        public VehiclesController(IVehicleService vehicleService, ApplicationDbContext context)
         {
             _vehicleService = vehicleService;
+            _context = context;
+        }
+
+        // ==========================================
+        // GET: /Vehicles/Map
+        // Live GPS Fleet Telemetry & Interactive Terminal Tracking
+        // ==========================================
+        [HttpGet]
+        public async Task<IActionResult> Map()
+        {
+            ViewBag.Title = "Live Fleet GPS Tracking Map";
+            var vehicles = await _context.Vehicles
+                .Include(v => v.Trips.Where(t => t.TripStatus == TripStatusEnum.InProgress || t.TripStatus == TripStatusEnum.Scheduled))
+                    .ThenInclude(t => t.Driver)
+                .OrderBy(v => v.VehicleName)
+                .ToListAsync();
+
+            return View(vehicles);
+        }
+
+        // ==========================================
+        // GET: /Vehicles/LocationsJson
+        // Real-time GeoJSON-style endpoint for Leaflet map markers
+        // ==========================================
+        [HttpGet]
+        public async Task<IActionResult> LocationsJson()
+        {
+            var vehicles = await _context.Vehicles
+                .Include(v => v.Trips.Where(t => t.TripStatus == TripStatusEnum.InProgress || t.TripStatus == TripStatusEnum.Scheduled))
+                    .ThenInclude(t => t.Driver)
+                .Select(v => new
+                {
+                    vehicleId = v.VehicleId,
+                    vehicleName = v.VehicleName,
+                    registrationNumber = v.RegistrationNumber,
+                    vehicleType = v.VehicleType,
+                    status = v.Status,
+                    latitude = v.CurrentLatitude,
+                    longitude = v.CurrentLongitude,
+                    hasGps = v.CurrentLatitude.HasValue && v.CurrentLongitude.HasValue,
+                    locationName = string.IsNullOrEmpty(v.CurrentLocationName) ? null : v.CurrentLocationName,
+                    odometer = v.CurrentOdometer,
+                    fuelType = v.FuelType,
+                    capacity = v.SeatingCapacity,
+                    activeTrip = v.Trips.Where(t => t.TripStatus == TripStatusEnum.InProgress || t.TripStatus == TripStatusEnum.Scheduled)
+                        .Select(t => new
+                        {
+                            tripId = t.TripId,
+                            source = t.Source,
+                            destination = t.Destination,
+                            driverName = t.Driver != null ? t.Driver.FullName : "Unassigned"
+                        }).FirstOrDefault()
+                })
+                .ToListAsync();
+
+            return Json(vehicles);
         }
 
         // ==========================================

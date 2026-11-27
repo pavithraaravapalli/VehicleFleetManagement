@@ -29,13 +29,13 @@
         <p class="text-muted small mb-0 mt-1">Operational Dispatch Record, Odometer Audit & Review Telemetry</p>
     </div>
     <div class="d-flex gap-2 flex-wrap">
-        @if (Model.TripStatus == "Scheduled")
+        @if (Model.TripStatus == "Scheduled" && (isDriver || isAdmin))
         {
             <a asp-action="Start" asp-route-id="@Model.TripId" class="btn btn-primary rounded-pill px-3">
                 <i class="bi bi-play-fill me-1"></i> Start Trip
             </a>
         }
-        else if (Model.TripStatus == "InProgress")
+        else if (Model.TripStatus == "InProgress" && (isDriver || isAdmin))
         {
             <a asp-action="Complete" asp-route-id="@Model.TripId" class="btn btn-success rounded-pill px-3">
                 <i class="bi bi-check-lg me-1"></i> Conclude Trip
@@ -51,7 +51,7 @@
             </button>
         }
 
-        <a asp-action="@(isDriver ? "MyTrips" : "Index")" class="btn btn-outline-secondary rounded-pill px-3">
+        <a asp-action="@(isDriver ? "MyTrips" : (isAdmin ? "Index" : "UserTrips"))" class="btn btn-outline-secondary rounded-pill px-3">
             <i class="bi bi-arrow-left me-1"></i> Back to Trips
         </a>
     </div>
@@ -59,66 +59,130 @@
 
 <!-- Metrics Row -->
 <div class="row g-3 mb-4">
-    <div class="col-12 col-md-3">
-        <div class="card card-stat">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <span class="text-muted small fw-semibold d-block text-uppercase">Total Distance</span>
-                    <h3 class="fw-bold mb-0 text-success">
-                        @(Model.TripStatus == "Completed" ? $"{Model.Distance:N1} km" : "In Flight")
-                    </h3>
+    @if (isAdmin || isDriver)
+    {
+        <div class="col-12 col-md-3">
+            <div class="card card-stat">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="text-muted small fw-semibold d-block text-uppercase">Total Distance</span>
+                        <h3 class="fw-bold mb-0 text-success">
+                            @(Model.TripStatus == "Completed" ? $"{Model.Distance:N1} km" : "In Flight")
+                        </h3>
+                    </div>
+                    <div class="stat-icon-wrapper bg-success bg-opacity-10 text-success">
+                        <i class="bi bi-speedometer2"></i>
+                    </div>
                 </div>
-                <div class="stat-icon-wrapper bg-success bg-opacity-10 text-success">
-                    <i class="bi bi-speedometer2"></i>
-                </div>
+                <small class="text-muted mt-1 d-block">Audited odometer variance</small>
             </div>
-            <small class="text-muted mt-1 d-block">Audited odometer variance</small>
         </div>
-    </div>
-    <div class="col-12 col-md-3">
-        <div class="card card-stat">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <span class="text-muted small fw-semibold d-block text-uppercase">Start Odometer</span>
-                    <h3 class="fw-bold mb-0 text-dark">@Model.StartOdometer.ToString("N0") <span class="fs-6 text-muted">km</span></h3>
+        <div class="col-12 col-md-3">
+            <div class="card card-stat">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="text-muted small fw-semibold d-block text-uppercase">Start Odometer</span>
+                        <h3 class="fw-bold mb-0 text-dark">@Model.StartOdometer.ToString("N0") <span class="fs-6 text-muted">km</span></h3>
+                    </div>
+                    <div class="stat-icon-wrapper bg-primary bg-opacity-10 text-primary">
+                        <i class="bi bi-play-circle"></i>
+                    </div>
                 </div>
-                <div class="stat-icon-wrapper bg-primary bg-opacity-10 text-primary">
-                    <i class="bi bi-play-circle"></i>
-                </div>
+                <small class="text-muted mt-1 d-block">Dispatch departure reading</small>
             </div>
-            <small class="text-muted mt-1 d-block">Dispatch departure reading</small>
         </div>
-    </div>
-    <div class="col-12 col-md-3">
-        <div class="card card-stat">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <span class="text-muted small fw-semibold d-block text-uppercase">End Odometer</span>
-                    <h3 class="fw-bold mb-0 text-dark">
-                        @(Model.EndOdometer.HasValue ? $"{Model.EndOdometer.Value:N0} km" : "Pending")
-                    </h3>
+        <div class="col-12 col-md-3">
+            <div class="card card-stat">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="text-muted small fw-semibold d-block text-uppercase">End Odometer</span>
+                        <h3 class="fw-bold mb-0 text-dark">
+                            @(Model.EndOdometer.HasValue ? $"{Model.EndOdometer.Value:N0} km" : "Pending")
+                        </h3>
+                    </div>
+                    <div class="stat-icon-wrapper bg-info bg-opacity-10 text-info">
+                        <i class="bi bi-flag"></i>
+                    </div>
                 </div>
-                <div class="stat-icon-wrapper bg-info bg-opacity-10 text-info">
-                    <i class="bi bi-flag"></i>
-                </div>
+                <small class="text-muted mt-1 d-block">Arrival log reading</small>
             </div>
-            <small class="text-muted mt-1 d-block">Arrival log reading</small>
         </div>
-    </div>
-    <div class="col-12 col-md-3">
-        <div class="card card-stat">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <span class="text-muted small fw-semibold d-block text-uppercase">Departure Date</span>
-                    <h4 class="fw-bold mb-0 text-dark">@Model.StartDate.ToString("MMM dd, yyyy")</h4>
+        <div class="col-12 col-md-3">
+            <div class="card card-stat">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="text-muted small fw-semibold d-block text-uppercase">Departure Date</span>
+                        <h4 class="fw-bold mb-0 text-dark">@Model.StartDate.ToString("MMM dd, yyyy")</h4>
+                    </div>
+                    <div class="stat-icon-wrapper bg-warning bg-opacity-10 text-warning">
+                        <i class="bi bi-calendar-event"></i>
+                    </div>
                 </div>
-                <div class="stat-icon-wrapper bg-warning bg-opacity-10 text-warning">
-                    <i class="bi bi-calendar-event"></i>
-                </div>
+                <small class="text-muted mt-1 d-block">@Model.StartDate.ToString("HH:mm")</small>
             </div>
-            <small class="text-muted mt-1 d-block">@Model.StartDate.ToString("HH:mm") UTC</small>
         </div>
-    </div>
+    }
+    else
+    {
+        <div class="col-12 col-md-3">
+            <div class="card card-stat">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="text-muted small fw-semibold d-block text-uppercase">Journey Status</span>
+                        <h4 class="fw-bold mb-0 text-primary">@Model.TripStatus</h4>
+                    </div>
+                    <div class="stat-icon-wrapper bg-primary bg-opacity-10 text-primary">
+                        <i class="bi bi-clock-history"></i>
+                    </div>
+                </div>
+                <small class="text-muted mt-1 d-block">Current operational state</small>
+            </div>
+        </div>
+        <div class="col-12 col-md-3">
+            <div class="card card-stat">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="text-muted small fw-semibold d-block text-uppercase">Journey Distance</span>
+                        <h4 class="fw-bold mb-0 text-success">
+                            @(Model.Distance > 0 ? $"{Model.Distance:N1} km" : "Pending completion")
+                        </h4>
+                    </div>
+                    <div class="stat-icon-wrapper bg-success bg-opacity-10 text-success">
+                        <i class="bi bi-signpost-split"></i>
+                    </div>
+                </div>
+                <small class="text-muted mt-1 d-block">Covered route distance</small>
+            </div>
+        </div>
+        <div class="col-12 col-md-3">
+            <div class="card card-stat">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="text-muted small fw-semibold d-block text-uppercase">Departure</span>
+                        <h5 class="fw-bold mb-0 text-dark">@Model.StartDate.ToString("MMM dd, yyyy")</h5>
+                    </div>
+                    <div class="stat-icon-wrapper bg-warning bg-opacity-10 text-warning">
+                        <i class="bi bi-calendar-check"></i>
+                    </div>
+                </div>
+                <small class="text-muted mt-1 d-block">Scheduled: @Model.StartDate.ToString("HH:mm")</small>
+            </div>
+        </div>
+        <div class="col-12 col-md-3">
+            <div class="card card-stat">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="text-muted small fw-semibold d-block text-uppercase">Assigned Vehicle</span>
+                        <h5 class="fw-bold mb-0 text-dark text-truncate">@(Model.Vehicle?.RegistrationNumber ?? "Assigned")</h5>
+                    </div>
+                    <div class="stat-icon-wrapper bg-info bg-opacity-10 text-info">
+                        <i class="bi bi-truck"></i>
+                    </div>
+                </div>
+                <small class="text-muted mt-1 d-block">@(Model.Vehicle?.VehicleName ?? "Fleet Transport")</small>
+            </div>
+        </div>
+    }
 </div>
 
 <div class="row g-4 mb-4">
@@ -236,60 +300,63 @@
     </div>
 </div>
 
-<!-- Linked Fuel Purchases -->
-<div class="card card-modern shadow-sm border-0 mb-4">
-    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center border-bottom">
-        <h5 class="mb-0 fw-bold text-dark">
-            <i class="bi bi-fuel-pump-fill me-2 text-primary"></i> Fuel Purchases Logged For This Journey (@(Model.FuelLogs?.Count ?? 0))
-        </h5>
-        @if (Model.TripStatus == "InProgress" || Model.TripStatus == "Completed")
-        {
-            <a asp-controller="Fuel" asp-action="Create" asp-route-tripId="@Model.TripId" asp-route-vehicleId="@Model.VehicleId" class="btn btn-sm btn-outline-primary rounded-pill">
-                <i class="bi bi-plus-circle me-1"></i> Log Fuel For This Trip
-            </a>
-        }
-    </div>
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-light text-secondary small text-uppercase">
-                    <tr>
-                        <th class="ps-4">Date</th>
-                        <th>Station</th>
-                        <th>Quantity (Litres)</th>
-                        <th>Price Per Litre</th>
-                        <th>Total Cost</th>
-                        <th>Odometer at Refill</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @if (Model.FuelLogs != null && Model.FuelLogs.Any())
-                    {
-                        foreach (var f in Model.FuelLogs)
+@if (isDriver || isAdmin)
+{
+    <!-- Linked Fuel Purchases -->
+    <div class="card card-modern shadow-sm border-0 mb-4">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center border-bottom">
+            <h5 class="mb-0 fw-bold text-dark">
+                <i class="bi bi-fuel-pump-fill me-2 text-primary"></i> Fuel Purchases Logged For This Journey (@(Model.FuelLogs?.Count ?? 0))
+            </h5>
+            @if (Model.TripStatus == "InProgress" || Model.TripStatus == "Completed")
+            {
+                <a asp-controller="Fuel" asp-action="Create" asp-route-tripId="@Model.TripId" asp-route-vehicleId="@Model.VehicleId" class="btn btn-sm btn-outline-primary rounded-pill">
+                    <i class="bi bi-plus-circle me-1"></i> Log Fuel For This Trip
+                </a>
+            }
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light text-secondary small text-uppercase">
+                        <tr>
+                            <th class="ps-4">Date</th>
+                            <th>Station</th>
+                            <th>Quantity (Litres)</th>
+                            <th>Price Per Litre</th>
+                            <th>Total Cost</th>
+                            <th>Odometer at Refill</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.FuelLogs != null && Model.FuelLogs.Any())
+                        {
+                            foreach (var f in Model.FuelLogs)
+                            {
+                                <tr>
+                                    <td class="ps-4">@f.FuelDate.ToString("d")</td>
+                                    <td>@f.FuelStation</td>
+                                    <td>@f.FuelQuantity.ToString("N2") L</td>
+                                    <td>$@f.PricePerLitre.ToString("N2")</td>
+                                    <td class="fw-bold text-success">$@f.TotalCost.ToString("N2")</td>
+                                    <td>@f.OdometerReading.ToString("N0") km</td>
+                                </tr>
+                            }
+                        }
+                        else
                         {
                             <tr>
-                                <td class="ps-4">@f.FuelDate.ToString("d")</td>
-                                <td>@f.FuelStation</td>
-                                <td>@f.FuelQuantity.ToString("N2") L</td>
-                                <td>$@f.PricePerLitre.ToString("N2")</td>
-                                <td class="fw-bold text-success">$@f.TotalCost.ToString("N2")</td>
-                                <td>@f.OdometerReading.ToString("N0") km</td>
+                                <td colspan="6" class="text-center py-4 text-muted small">
+                                    No fuel refills recorded specifically for this trip.
+                                </td>
                             </tr>
                         }
-                    }
-                    else
-                    {
-                        <tr>
-                            <td colspan="6" class="text-center py-4 text-muted small">
-                                No fuel refills recorded specifically for this trip.
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
-</div>
+}
 
 <!-- Review Driver Modal (Visible for passengers / staff on completed trips) -->
 <div class="modal fade" id="reviewModal" tabindex="-1" aria-labelledby="reviewModalLabel" aria-hidden="true">

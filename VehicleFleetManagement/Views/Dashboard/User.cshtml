@@ -16,7 +16,7 @@
                     }
                     else
                     {
-                        <div class="avatar-placeholder-lg">
+                        <div class="avatar-placeholder-lg bg-primary text-white fw-bold d-flex align-items-center justify-content-center rounded-circle" style="width: 56px; height: 56px; font-size: 1.5rem; background-color: var(--fleet-primary) !important;">
                             @((Model.FullName.Length > 0 ? Model.FullName[0].ToString().ToUpper() : "U"))
                         </div>
                     }
@@ -24,7 +24,7 @@
                     <div>
                         <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
                             <h2 class="h3 fw-bold mb-0 text-white">Welcome back, @Model.FullName!</h2>
-                            <span class="badge badge-status badge-available"><i class="bi bi-shield-check"></i> Staff Account Active</span>
+                            <span class="badge bg-primary text-white"><i class="bi bi-person-badge me-1"></i> Staff Account</span>
                         </div>
 
                         <div class="d-flex align-items-center flex-wrap gap-3 small text-white-50">
@@ -38,20 +38,12 @@
                     </div>
                 </div>
 
-                <div class="d-flex align-items-center gap-2">
-                    <div class="text-end d-none d-md-block me-2">
-                        <small class="text-white-50 d-block">Today's Date</small>
-                        <strong class="text-white">@DateTime.UtcNow.ToString("dddd, MMM dd, yyyy")</strong>
-                    </div>
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <a asp-controller="TripRequests" asp-action="Create" class="btn btn-primary px-4 py-2 shadow-sm fw-semibold" style="background-color: var(--fleet-primary); border-color: var(--fleet-primary);">
+                        <i class="bi bi-plus-circle me-2"></i> Request Transport
+                    </a>
                     <a asp-controller="Account" asp-action="Profile" class="btn btn-outline-light btn-sm rounded-pill px-3">
                         <i class="bi bi-person-gear me-1"></i> My Profile
-                    </a>
-                    <a asp-controller="Notifications" asp-action="Index" class="btn btn-fleet-teal btn-sm rounded-pill px-3 position-relative">
-                        <i class="bi bi-bell-fill me-1"></i> Notifications
-                        @if (Model.UnreadNotificationsCount > 0)
-                        {
-                            <span class="badge bg-danger ms-1">@Model.UnreadNotificationsCount</span>
-                        }
                     </a>
                 </div>
             </div>
@@ -59,107 +51,78 @@
     </div>
 </div>
 
-<!-- 3 Real SQL Server Database KPI Cards -->
+<!-- 4 Relevant Staff KPI Cards -->
 <div class="row g-3 mb-4">
-    <!-- 1. Available Transport Assets -->
-    <div class="col-12 col-md-4">
-        <a href="#available-vehicles" class="text-decoration-none">
-            <div class="card card-custom p-3 border-start border-success border-4 h-100 hover-elevate">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <div class="text-muted small fw-semibold text-uppercase">Ready Transport Assets</div>
-                        <div class="fs-3 fw-bold text-success mt-1">@Model.AvailableVehiclesCount</div>
-                    </div>
-                    <div class="bg-success bg-opacity-10 text-success rounded-circle p-3">
-                        <i class="bi bi-truck fs-4"></i>
-                    </div>
-                </div>
-                <div class="small text-muted mt-2">Available for organizational journeys</div>
-            </div>
-        </a>
-    </div>
-
-    <!-- 2. Active & Scheduled Trips -->
-    <div class="col-12 col-md-4">
-        <a asp-controller="Trips" asp-action="Index" class="text-decoration-none">
-            <div class="card card-custom p-3 border-start border-primary border-4 h-100 hover-elevate">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <div class="text-muted small fw-semibold text-uppercase">Active / Scheduled Trips</div>
-                        <div class="fs-3 fw-bold text-primary mt-1">@Model.ActiveTripsCount</div>
-                    </div>
-                    <div class="bg-primary bg-opacity-10 text-primary rounded-circle p-3">
-                        <i class="bi bi-geo-alt fs-4"></i>
-                    </div>
-                </div>
-                <div class="small text-muted mt-2">Scheduled fleet journeys across organization</div>
-            </div>
-        </a>
-    </div>
-
-    <!-- 3. Unread Notifications -->
-    <div class="col-12 col-md-4">
-        <a asp-controller="Notifications" asp-action="Index" class="text-decoration-none">
+    <!-- 1. Pending Requests -->
+    <div class="col-6 col-md-3">
+        <a asp-controller="TripRequests" asp-action="Index" class="text-decoration-none">
             <div class="card card-custom p-3 border-start border-warning border-4 h-100 hover-elevate">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <div class="text-muted small fw-semibold text-uppercase">Alerts & Notifications</div>
-                        <div class="fs-3 fw-bold text-dark mt-1">@Model.UnreadNotificationsCount</div>
+                        <div class="text-muted small fw-semibold text-uppercase">Pending Review</div>
+                        <div class="fs-4 fw-bold text-dark mt-1">@Model.PendingRequestsCount</div>
                     </div>
-                    <div class="bg-warning bg-opacity-10 text-warning rounded-circle p-3">
+                    <div class="bg-warning bg-opacity-10 text-warning rounded-circle p-2">
+                        <i class="bi bi-hourglass-split fs-4"></i>
+                    </div>
+                </div>
+                <div class="small text-muted mt-2">Awaiting dispatch approval</div>
+            </div>
+        </a>
+    </div>
+
+    <!-- 2. Approved Requests -->
+    <div class="col-6 col-md-3">
+        <a asp-controller="TripRequests" asp-action="Index" class="text-decoration-none">
+            <div class="card card-custom p-3 border-start border-primary border-4 h-100 hover-elevate">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="text-muted small fw-semibold text-uppercase">Approved Bookings</div>
+                        <div class="fs-4 fw-bold text-primary mt-1">@Model.ApprovedRequestsCount</div>
+                    </div>
+                    <div class="bg-primary bg-opacity-10 text-primary rounded-circle p-2">
+                        <i class="bi bi-clipboard2-check fs-4"></i>
+                    </div>
+                </div>
+                <div class="small text-muted mt-2">Ready for travel</div>
+            </div>
+        </a>
+    </div>
+
+    <!-- 3. Upcoming Journeys -->
+    <div class="col-6 col-md-3">
+        <a asp-controller="Trips" asp-action="UserTrips" class="text-decoration-none">
+            <div class="card card-custom p-3 border-start border-info border-4 h-100 hover-elevate">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="text-muted small fw-semibold text-uppercase">Upcoming Journeys</div>
+                        <div class="fs-4 fw-bold text-dark mt-1">@Model.UpcomingTripsCount</div>
+                    </div>
+                    <div class="bg-info bg-opacity-10 text-info rounded-circle p-2">
+                        <i class="bi bi-signpost-2 fs-4"></i>
+                    </div>
+                </div>
+                <div class="small text-muted mt-2">Scheduled departures</div>
+            </div>
+        </a>
+    </div>
+
+    <!-- 4. Notifications -->
+    <div class="col-6 col-md-3">
+        <a asp-controller="Notifications" asp-action="Index" class="text-decoration-none">
+            <div class="card card-custom p-3 border-start border-secondary border-4 h-100 hover-elevate">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="text-muted small fw-semibold text-uppercase">Notifications</div>
+                        <div class="fs-4 fw-bold text-dark mt-1">@Model.UnreadNotificationsCount</div>
+                    </div>
+                    <div class="bg-secondary bg-opacity-10 text-secondary rounded-circle p-2">
                         <i class="bi bi-bell fs-4"></i>
                     </div>
                 </div>
                 <div class="small text-muted mt-2">
-                    @if (Model.UnreadNotificationsCount > 0)
-                    {
-                        <span class="text-danger fw-semibold">@Model.UnreadNotificationsCount unread alerts</span>
-                    }
-                    else
-                    {
-                        <span>All alerts caught up</span>
-                    }
+                    @(Model.UnreadNotificationsCount > 0 ? $"{Model.UnreadNotificationsCount} unread alert(s)" : "All caught up")
                 </div>
-            </div>
-        </a>
-    </div>
-</div>
-
-<!-- Quick Action Shortcuts -->
-<div class="row g-2 mb-4">
-    <div class="col-6 col-md-3">
-        <a href="#available-vehicles" class="btn btn-outline-secondary w-100 py-2 rounded-3 text-start d-flex align-items-center">
-            <i class="bi bi-car-front fs-5 text-primary me-2"></i>
-            <div>
-                <strong class="d-block text-dark small">Available Fleet</strong>
-                <small class="text-muted" style="font-size: 0.75rem;">Browse transport assets</small>
-            </div>
-        </a>
-    </div>
-    <div class="col-6 col-md-3">
-        <a asp-controller="Trips" asp-action="Index" class="btn btn-outline-secondary w-100 py-2 rounded-3 text-start d-flex align-items-center">
-            <i class="bi bi-signpost-2 fs-5 text-success me-2"></i>
-            <div>
-                <strong class="d-block text-dark small">Trip Schedules</strong>
-                <small class="text-muted" style="font-size: 0.75rem;">View organizational routes</small>
-            </div>
-        </a>
-    </div>
-    <div class="col-6 col-md-3">
-        <a asp-controller="Notifications" asp-action="Index" class="btn btn-outline-secondary w-100 py-2 rounded-3 text-start d-flex align-items-center">
-            <i class="bi bi-bell fs-5 text-warning me-2"></i>
-            <div>
-                <strong class="d-block text-dark small">Notification Hub</strong>
-                <small class="text-muted" style="font-size: 0.75rem;">Check operational notices</small>
-            </div>
-        </a>
-    </div>
-    <div class="col-6 col-md-3">
-        <a asp-controller="Account" asp-action="Profile" class="btn btn-outline-secondary w-100 py-2 rounded-3 text-start d-flex align-items-center">
-            <i class="bi bi-person-gear fs-5 text-info me-2"></i>
-            <div>
-                <strong class="d-block text-dark small">Account Settings</strong>
-                <small class="text-muted" style="font-size: 0.75rem;">Update profile & password</small>
             </div>
         </a>
     </div>
@@ -167,119 +130,64 @@
 
 <!-- Main Operational Layout -->
 <div class="row g-4 mb-4">
-    <!-- Left Column: Available Fleet Assets & Recent Journeys -->
+    <!-- Left Column: My Requests & Upcoming Journeys -->
     <div class="col-12 col-lg-7">
         
-        <!-- Available Organizational Transport Assets -->
-        <div class="card card-custom shadow-sm mb-4" id="available-vehicles">
-            <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
-                <h6 class="fw-bold mb-0 text-dark">
-                    <i class="bi bi-truck text-success me-2"></i>Available Fleet Transport Assets
-                </h6>
-                <span class="badge bg-success">@Model.AvailableVehiclesCount Ready</span>
-            </div>
-            <div class="card-body p-0">
-                @if (Model.AvailableVehicles != null && Model.AvailableVehicles.Any())
-                {
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0">
-                            <thead class="table-light small">
-                                <tr>
-                                    <th class="ps-3">Vehicle</th>
-                                    <th>Type</th>
-                                    <th>Seating</th>
-                                    <th>Fuel</th>
-                                    <th class="text-end pe-3">Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var v in Model.AvailableVehicles)
-                                {
-                                    <tr>
-                                        <td class="ps-3">
-                                            <span class="fw-bold text-dark">@v.VehicleName</span>
-                                            <div class="small text-muted font-monospace">@v.RegistrationNumber</div>
-                                        </td>
-                                        <td>
-                                            <span class="badge bg-light text-dark border">@v.VehicleType</span>
-                                        </td>
-                                        <td class="small">
-                                            <i class="bi bi-people me-1 text-muted"></i>@v.SeatingCapacity Seats
-                                        </td>
-                                        <td class="small text-muted">
-                                            @v.FuelType
-                                        </td>
-                                        <td class="text-end pe-3">
-                                            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1">Available</span>
-                                        </td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                    </div>
-                }
-                else
-                {
-                    <div class="text-center py-5 text-muted">
-                        <i class="bi bi-shield-check fs-1 text-secondary d-block mb-2"></i>
-                        <h6 class="fw-semibold text-dark">No Vehicles Currently Available</h6>
-                        <p class="small text-muted mb-0">All fleet vehicles are currently dispatched or undergoing maintenance.</p>
-                    </div>
-                }
-            </div>
-        </div>
-
-        <!-- Recent Fleet Trips & Schedules -->
+        <!-- My Recent Transport Booking Requests -->
         <div class="card card-custom shadow-sm mb-4">
             <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
                 <h6 class="fw-bold mb-0 text-dark">
-                    <i class="bi bi-calendar-event text-primary me-2"></i>Recent Organizational Journeys
+                    <i class="bi bi-clipboard2-check text-primary me-2"></i>My Booking Requests
                 </h6>
-                <a asp-controller="Trips" asp-action="Index" class="btn btn-sm btn-link text-decoration-none">View All Trips &rarr;</a>
+                <div class="d-flex align-items-center gap-2">
+                    <a asp-controller="TripRequests" asp-action="Create" class="btn btn-sm btn-primary py-1 px-2" style="background-color: var(--fleet-primary); border-color: var(--fleet-primary);">
+                        <i class="bi bi-plus"></i> New Request
+                    </a>
+                    <a asp-controller="TripRequests" asp-action="Index" class="btn btn-sm btn-link text-decoration-none">View All &rarr;</a>
+                </div>
             </div>
             <div class="card-body p-0">
-                @if (Model.RecentTrips != null && Model.RecentTrips.Any())
+                @if (Model.MyBookingRequests != null && Model.MyBookingRequests.Any())
                 {
                     <div class="table-responsive">
                         <table class="table table-hover align-middle mb-0">
                             <thead class="table-light small">
                                 <tr>
-                                    <th class="ps-3">Route</th>
-                                    <th>Vehicle & Driver</th>
-                                    <th>Date</th>
+                                    <th class="ps-3">Request #</th>
+                                    <th>Route</th>
+                                    <th>Departure</th>
                                     <th>Status</th>
                                     <th class="text-end pe-3">Action</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach (var trip in Model.RecentTrips)
+                                @foreach (var req in Model.MyBookingRequests)
                                 {
-                                    string badgeClass = trip.TripStatus switch
+                                    var reqBadge = req.Status switch
                                     {
-                                        "Completed" => "bg-success",
-                                        "InProgress" => "bg-primary",
-                                        "Scheduled" => "bg-warning text-dark",
+                                        "Approved" => "bg-primary",
+                                        "Pending" => "bg-warning text-dark",
+                                        "Rejected" => "bg-danger",
                                         _ => "bg-secondary"
                                     };
 
                                     <tr>
-                                        <td class="ps-3">
-                                            <span class="fw-bold text-dark">@trip.Source &rarr; @trip.Destination</span>
-                                            <div class="small text-muted">Trip #@trip.TripId</div>
-                                        </td>
-                                        <td class="small">
-                                            <div><i class="bi bi-truck me-1 text-muted"></i>@(trip.Vehicle?.VehicleName ?? "Fleet Vehicle")</div>
-                                            <div class="text-muted"><i class="bi bi-person me-1"></i>@(trip.Driver?.FullName ?? "Assigned Driver")</div>
-                                        </td>
-                                        <td class="small text-muted">
-                                            @trip.StartDate.ToString("MMM dd, yyyy")
+                                        <td class="ps-3 fw-bold text-dark small">
+                                            #@req.TripRequestId
                                         </td>
                                         <td>
-                                            <span class="badge @badgeClass">@trip.TripStatus</span>
+                                            <div class="small fw-semibold text-dark">@req.Source &rarr; @req.Destination</div>
+                                            <div class="text-muted" style="font-size: 0.72rem;">@req.PassengerCount passenger(s)</div>
+                                        </td>
+                                        <td class="small text-muted">
+                                            @req.StartDate.ToString("MMM dd, HH:mm")
+                                        </td>
+                                        <td>
+                                            <span class="badge @reqBadge">@req.Status</span>
                                         </td>
                                         <td class="text-end pe-3">
-                                            <a asp-controller="Trips" asp-action="Details" asp-route-id="@trip.TripId" class="btn btn-sm btn-outline-primary py-1 px-2 rounded-pill">
-                                                Inspect
+                                            <a asp-controller="TripRequests" asp-action="Details" asp-route-id="@req.TripRequestId" class="btn btn-sm btn-outline-secondary py-1 px-2" title="View Request Details">
+                                                <i class="bi bi-eye"></i> Details
                                             </a>
                                         </td>
                                     </tr>
@@ -291,9 +199,81 @@
                 else
                 {
                     <div class="text-center py-5 text-muted">
-                        <i class="bi bi-map fs-1 text-secondary d-block mb-2"></i>
-                        <h6 class="fw-semibold text-dark">No Trip Records Found</h6>
-                        <p class="small text-muted mb-0">No journeys have been scheduled yet.</p>
+                        <i class="bi bi-clipboard-plus fs-2 text-secondary d-block mb-2"></i>
+                        <h6 class="fw-semibold text-dark small">No Booking Requests Submitted Yet</h6>
+                        <p class="small text-muted mb-3">Need official transportation for an organizational journey?</p>
+                        <a asp-controller="TripRequests" asp-action="Create" class="btn btn-sm btn-primary">
+                            <i class="bi bi-plus-circle me-1"></i> Request Transport Now
+                        </a>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- My Upcoming Journeys -->
+        <div class="card card-custom shadow-sm mb-4">
+            <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                <h6 class="fw-bold mb-0 text-dark">
+                    <i class="bi bi-signpost-2 text-primary me-2"></i>My Upcoming Journeys
+                </h6>
+                <a asp-controller="Trips" asp-action="UserTrips" class="btn btn-sm btn-link text-decoration-none">View All &rarr;</a>
+            </div>
+            <div class="card-body p-0">
+                @if (Model.MyUpcomingTrips != null && Model.MyUpcomingTrips.Any())
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light small">
+                                <tr>
+                                    <th class="ps-3">Journey</th>
+                                    <th>Vehicle & Driver</th>
+                                    <th>Scheduled Time</th>
+                                    <th>Status</th>
+                                    <th class="text-end pe-3">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var trip in Model.MyUpcomingTrips)
+                                {
+                                    <tr>
+                                        <td class="ps-3">
+                                            <span class="fw-bold text-dark">@trip.Source &rarr; @trip.Destination</span>
+                                            <div class="small text-muted">Trip #@trip.TripId</div>
+                                        </td>
+                                        <td class="small">
+                                            <div><i class="bi bi-truck me-1 text-primary"></i>@(trip.Vehicle?.VehicleName ?? "Fleet Vehicle") (@(trip.Vehicle?.RegistrationNumber))</div>
+                                            <div class="text-muted"><i class="bi bi-person me-1"></i>@(trip.Driver?.FullName ?? "Assigned Driver") (@(trip.Driver?.PhoneNumber))</div>
+                                        </td>
+                                        <td class="small text-muted">
+                                            @trip.StartDate.ToString("MMM dd, yyyy HH:mm")
+                                        </td>
+                                        <td>
+                                            @if (trip.TripStatus == "InProgress")
+                                            {
+                                                <span class="badge bg-primary">Active Journey</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-warning text-dark">Scheduled</span>
+                                            }
+                                        </td>
+                                        <td class="text-end pe-3">
+                                            <a asp-controller="Trips" asp-action="Details" asp-route-id="@trip.TripId" class="btn btn-sm btn-outline-primary py-1 px-2">
+                                                <i class="bi bi-eye"></i> Details
+                                            </a>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-5 text-muted">
+                        <i class="bi bi-geo-alt fs-1 text-secondary d-block mb-2"></i>
+                        <h6 class="fw-semibold text-dark">No Upcoming Journeys</h6>
+                        <p class="small text-muted mb-0">Once your transport requests are approved, your assigned journeys will appear here.</p>
                     </div>
                 }
             </div>
@@ -301,14 +281,14 @@
 
     </div>
 
-    <!-- Right Column: Recent Personal Notifications & Verified Reviews -->
+    <!-- Right Column: Recent Completed Trips & Notifications -->
     <div class="col-12 col-lg-5">
         
         <!-- Recent Personal Notifications -->
         <div class="card card-custom shadow-sm mb-4">
             <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
                 <h6 class="fw-bold mb-0 text-dark">
-                    <i class="bi bi-bell-fill text-warning me-2"></i>My Recent Notifications
+                    <i class="bi bi-bell-fill text-warning me-2"></i>Notifications
                 </h6>
                 <a asp-controller="Notifications" asp-action="Index" class="btn btn-sm btn-link text-decoration-none">Manage All</a>
             </div>
@@ -337,49 +317,41 @@
                 else
                 {
                     <div class="text-center py-5 text-muted">
-                        <i class="bi bi-check2-circle fs-1 text-success d-block mb-2"></i>
+                        <i class="bi bi-check2-circle fs-1 text-primary d-block mb-2"></i>
                         <h6 class="fw-semibold text-dark">You're All Caught Up!</h6>
-                        <p class="small text-muted mb-0">No active alerts or notices for your account.</p>
+                        <p class="small text-muted mb-0">No unread alerts for your account.</p>
                     </div>
                 }
             </div>
         </div>
 
-        <!-- My Submitted Driver Reviews -->
+        <!-- Recent Trip History -->
         <div class="card card-custom shadow-sm mb-4">
             <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
                 <h6 class="fw-bold mb-0 text-dark">
-                    <i class="bi bi-star-fill text-warning me-2"></i>My Driver Feedback
+                    <i class="bi bi-clock-history text-secondary me-2"></i>Recent Trip History
                 </h6>
-                <span class="badge bg-light text-secondary border">@Model.TotalReviewsWrittenCount Submitted</span>
+                <a asp-controller="Trips" asp-action="UserTrips" asp-route-status="Completed" class="btn btn-sm btn-link text-decoration-none">View All</a>
             </div>
             <div class="card-body p-0">
-                @if (Model.MyRecentReviews != null && Model.MyRecentReviews.Any())
+                @if (Model.MyCompletedTrips != null && Model.MyCompletedTrips.Any())
                 {
                     <div class="list-group list-group-flush">
-                        @foreach (var review in Model.MyRecentReviews)
+                        @foreach (var trip in Model.MyCompletedTrips)
                         {
                             <div class="list-group-item p-3">
                                 <div class="d-flex justify-content-between align-items-center mb-1">
-                                    <span class="fw-bold small text-dark"><i class="bi bi-person-circle me-1"></i>@(review.Driver?.FullName ?? "Driver")</span>
-                                    <span class="text-warning small">
-                                        @for (int i = 1; i <= 5; i++)
-                                        {
-                                            if (i <= review.Rating)
-                                            {
-                                                <i class="bi bi-star-fill"></i>
-                                            }
-                                            else
-                                            {
-                                                <i class="bi bi-star text-muted"></i>
-                                            }
-                                        }
-                                    </span>
+                                    <span class="fw-bold text-dark small">@trip.Source &rarr; @trip.Destination</span>
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle">Completed</span>
                                 </div>
-                                <p class="small text-muted mb-1 fst-italic">"@review.Comment"</p>
-                                <div class="d-flex justify-content-between small text-muted" style="font-size: 0.75rem;">
-                                    <span>Trip #@review.TripId (@review.Trip?.Source &rarr; @review.Trip?.Destination)</span>
-                                    <span>@review.ReviewDate.ToString("MMM dd, yyyy")</span>
+                                <div class="small text-muted d-flex justify-content-between align-items-center">
+                                    <span>Driver: @(trip.Driver?.FullName ?? "Assigned Driver")</span>
+                                    <span>@trip.Distance.ToString("N1") km</span>
+                                </div>
+                                <div class="mt-2 text-end">
+                                    <a asp-controller="Trips" asp-action="Details" asp-route-id="@trip.TripId" class="btn btn-xs btn-outline-secondary">
+                                        <i class="bi bi-eye"></i> Details
+                                    </a>
                                 </div>
                             </div>
                         }
@@ -387,13 +359,9 @@
                 }
                 else
                 {
-                    <div class="text-center py-5 text-muted">
-                        <i class="bi bi-chat-square-heart fs-1 text-secondary d-block mb-2"></i>
-                        <h6 class="fw-semibold text-dark">No Reviews Submitted Yet</h6>
-                        <p class="small text-muted mb-2">You can rate and review your driver on completed trips.</p>
-                        <a asp-controller="Trips" asp-action="Index" class="btn btn-sm btn-outline-primary rounded-pill">
-                            Browse Trips to Review
-                        </a>
+                    <div class="text-center py-4 text-muted">
+                        <i class="bi bi-journal-check fs-2 text-secondary d-block mb-1"></i>
+                        <p class="small text-muted mb-0">No completed journeys recorded yet.</p>
                     </div>
                 }
             </div>

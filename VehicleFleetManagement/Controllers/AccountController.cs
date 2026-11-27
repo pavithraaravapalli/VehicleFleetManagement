@@ -67,8 +67,6 @@ namespace VehicleFleetManagement.Controllers
 
             ViewBag.Title = "Sign In - FleetFlow Pro";
             ViewData["ReturnUrl"] = returnUrl;
-            ViewBag.IsGoogleConfigured = !string.IsNullOrEmpty(_configuration["Authentication:Google:ClientId"]) &&
-                                        !string.IsNullOrEmpty(_configuration["Authentication:Google:ClientSecret"]);
 
             return View(new LoginViewModel { ReturnUrl = returnUrl });
         }
@@ -82,8 +80,6 @@ namespace VehicleFleetManagement.Controllers
         public async Task<IActionResult> Login(LoginViewModel model)
         {
             ViewBag.Title = "Sign In - FleetFlow Pro";
-            ViewBag.IsGoogleConfigured = !string.IsNullOrEmpty(_configuration["Authentication:Google:ClientId"]) &&
-                                        !string.IsNullOrEmpty(_configuration["Authentication:Google:ClientSecret"]);
 
             if (!ModelState.IsValid)
             {
@@ -142,8 +138,6 @@ namespace VehicleFleetManagement.Controllers
 
             ViewBag.Title = "Create Account - FleetFlow Pro";
             ViewData["ReturnUrl"] = returnUrl;
-            ViewBag.IsGoogleConfigured = !string.IsNullOrEmpty(_configuration["Authentication:Google:ClientId"]) &&
-                                        !string.IsNullOrEmpty(_configuration["Authentication:Google:ClientSecret"]);
 
             return View(new RegisterViewModel());
         }
@@ -157,8 +151,6 @@ namespace VehicleFleetManagement.Controllers
         public async Task<IActionResult> Register(RegisterViewModel model, string? returnUrl = null)
         {
             ViewBag.Title = "Create Account - FleetFlow Pro";
-            ViewBag.IsGoogleConfigured = !string.IsNullOrEmpty(_configuration["Authentication:Google:ClientId"]) &&
-                                        !string.IsNullOrEmpty(_configuration["Authentication:Google:ClientSecret"]);
 
             // Rule: Admin role cannot be self-selected during public registration
             if (model.Role.Equals(DbSeeder.RoleAdmin, StringComparison.OrdinalIgnoreCase))
@@ -216,10 +208,8 @@ namespace VehicleFleetManagement.Controllers
                 return View(model);
             }
 
-            // Assign chosen role (Driver or User)
-            var targetRole = model.Role.Equals(DbSeeder.RoleDriver, StringComparison.OrdinalIgnoreCase) 
-                ? DbSeeder.RoleDriver 
-                : DbSeeder.RoleUser;
+            // Assign normal User role (Drivers are registered and assigned by Fleet Administrator)
+            var targetRole = DbSeeder.RoleUser;
 
             if (!await _roleManager.RoleExistsAsync(targetRole))
             {
@@ -227,27 +217,6 @@ namespace VehicleFleetManagement.Controllers
             }
 
             await _userManager.AddToRoleAsync(newUser, targetRole);
-
-            // If Driver, automatically provision Driver profile record
-            if (targetRole == DbSeeder.RoleDriver)
-            {
-                var newDriver = new Driver
-                {
-                    UserId = newUser.Id,
-                    FullName = model.FullName.Trim(),
-                    Email = model.Email.Trim(),
-                    PhoneNumber = model.PhoneNumber.Trim(),
-                    LicenseNumber = model.LicenseNumber!.Trim(),
-                    LicenseExpiryDate = DateTime.UtcNow.AddYears(3),
-                    Address = string.IsNullOrWhiteSpace(model.Address) ? "Fleet Operations Center" : model.Address.Trim(),
-                    JoiningDate = DateTime.UtcNow,
-                    AvailabilityStatus = DriverStatus.Available,
-                    Rating = 5.0m,
-                    TotalReviews = 0
-                };
-                _context.Drivers.Add(newDriver);
-                await _context.SaveChangesAsync();
-            }
 
             _logger.LogInformation("New user registered: {Email} with role {Role}", newUser.Email, targetRole);
             TempData["Success"] = $"Account created successfully! Welcome to FleetFlow Pro, {newUser.FullName}.";
@@ -259,102 +228,96 @@ namespace VehicleFleetManagement.Controllers
         }
 
         // ==========================================
-        // POST: /Account/ExternalLogin
+        // GET: /Account/ForgotPassword
+        // ==========================================
+        [HttpGet]
+        [AllowAnonymous]
+        public IActionResult ForgotPassword()
+        {
+            ViewBag.Title = "Forgot Password - FleetFlow Pro";
+            return View();
+        }
+
+        // ==========================================
+        // POST: /Account/ForgotPassword
         // ==========================================
         [HttpPost]
         [AllowAnonymous]
         [ValidateAntiForgeryToken]
-        public IActionResult ExternalLogin(string provider, string? returnUrl = null)
+        public async Task<IActionResult> ForgotPassword(ForgotPasswordViewModel model)
         {
-            var isConfigured = !string.IsNullOrEmpty(_configuration["Authentication:Google:ClientId"]) &&
-                               !string.IsNullOrEmpty(_configuration["Authentication:Google:ClientSecret"]);
-
-            if (!isConfigured && provider.Equals("Google", StringComparison.OrdinalIgnoreCase))
+            ViewBag.Title = "Forgot Password - FleetFlow Pro";
+            if (!ModelState.IsValid)
             {
-                TempData["Error"] = "Google Authentication is not yet configured. Please set 'Authentication:Google:ClientId' and 'Authentication:Google:ClientSecret' via User Secrets: dotnet user-secrets set \"Authentication:Google:ClientId\" \"YOUR_ID\".";
-                return RedirectToAction("Login", new { returnUrl });
+                return View(model);
             }
 
-            var redirectUrl = Url.Action(nameof(ExternalLoginCallback), "Account", new { returnUrl });
-            var properties = _signInManager.ConfigureExternalAuthenticationProperties(provider, redirectUrl);
-            return Challenge(properties, provider);
+            var user = await _userManager.FindByEmailAsync(model.Email);
+            if (user == null)
+            {
+                ViewBag.ResetSent = true;
+                return View();
+            }
+
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+            var resetLink = Url.Action("ResetPassword", "Account", new { token, email = model.Email }, Request.Scheme);
+
+            ViewBag.ResetLink = resetLink;
+            ViewBag.ResetSent = true;
+            return View();
         }
 
         // ==========================================
-        // GET: /Account/ExternalLoginCallback
+        // GET: /Account/ResetPassword
         // ==========================================
         [HttpGet]
         [AllowAnonymous]
-        public async Task<IActionResult> ExternalLoginCallback(string? returnUrl = null, string? remoteError = null)
+        public IActionResult ResetPassword(string? token, string? email)
         {
-            if (remoteError != null)
+            if (string.IsNullOrEmpty(token) || string.IsNullOrEmpty(email))
             {
-                _logger.LogError("External provider authentication error: {Error}", remoteError);
-                TempData["Error"] = $"External login provider error: {remoteError}";
-                return RedirectToAction(nameof(Login), new { returnUrl });
+                return RedirectToAction(nameof(Login));
             }
 
-            var info = await _signInManager.GetExternalLoginInfoAsync();
-            if (info == null)
+            ViewBag.Title = "Reset Password - FleetFlow Pro";
+            var model = new ResetPasswordViewModel { Token = token, Email = email };
+            return View(model);
+        }
+
+        // ==========================================
+        // POST: /Account/ResetPassword
+        // ==========================================
+        [HttpPost]
+        [AllowAnonymous]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ResetPassword(ResetPasswordViewModel model)
+        {
+            ViewBag.Title = "Reset Password - FleetFlow Pro";
+            if (!ModelState.IsValid)
             {
-                TempData["Error"] = "Could not retrieve login information from external provider.";
-                return RedirectToAction(nameof(Login), new { returnUrl });
+                return View(model);
             }
 
-            // Attempt to sign in if this external login is already linked
-            var signInResult = await _signInManager.ExternalLoginSignInAsync(info.LoginProvider, info.ProviderKey, isPersistent: false, bypassTwoFactor: true);
-            if (signInResult.Succeeded)
+            var user = await _userManager.FindByEmailAsync(model.Email);
+            if (user == null)
             {
-                var user = await _userManager.FindByLoginAsync(info.LoginProvider, info.ProviderKey);
-                _logger.LogInformation("User {Email} logged in with {Provider}.", user?.Email, info.LoginProvider);
-                TempData["Success"] = $"Signed in with {info.ProviderDisplayName ?? info.LoginProvider}!";
-                return await RedirectUserByRoleAsync(user!, returnUrl);
+                TempData["Success"] = "Your password has been reset successfully. You may now sign in.";
+                return RedirectToAction(nameof(Login));
             }
 
-            // If account doesn't exist under this login, check if a user with matching email exists
-            var email = info.Principal.FindFirstValue(ClaimTypes.Email);
-            if (string.IsNullOrEmpty(email))
+            var result = await _userManager.ResetPasswordAsync(user, model.Token, model.Password);
+            if (result.Succeeded)
             {
-                TempData["Error"] = "Email address not received from external provider.";
-                return RedirectToAction(nameof(Login), new { returnUrl });
+                TempData["Success"] = "Your password has been reset successfully. You may now sign in.";
+                return RedirectToAction(nameof(Login));
             }
 
-            var existingUser = await _userManager.FindByEmailAsync(email);
-            if (existingUser != null)
+            foreach (var error in result.Errors)
             {
-                // Link external login to existing local user account
-                var addLoginResult = await _userManager.AddLoginAsync(existingUser, info);
-                if (addLoginResult.Succeeded)
-                {
-                    await _signInManager.SignInAsync(existingUser, isPersistent: false);
-                    TempData["Success"] = $"Your {info.ProviderDisplayName ?? info.LoginProvider} account has been linked successfully!";
-                    return await RedirectUserByRoleAsync(existingUser, returnUrl);
-                }
+                ModelState.AddModelError(string.Empty, error.Description);
             }
 
-            // Auto-provision new User role account from Google Claims
-            var name = info.Principal.FindFirstValue(ClaimTypes.Name) ?? email.Split('@')[0];
-            var newUser = new ApplicationUser
-            {
-                UserName = email,
-                Email = email,
-                FullName = name,
-                CreatedAt = DateTime.UtcNow
-            };
-
-            var identityResult = await _userManager.CreateAsync(newUser);
-            if (identityResult.Succeeded)
-            {
-                await _userManager.AddToRoleAsync(newUser, DbSeeder.RoleUser);
-                await _userManager.AddLoginAsync(newUser, info);
-
-                await _signInManager.SignInAsync(newUser, isPersistent: false);
-                TempData["Success"] = $"Welcome to FleetFlow Pro, {newUser.FullName}! Your Google account is now connected.";
-                return await RedirectUserByRoleAsync(newUser, returnUrl);
-            }
-
-            TempData["Error"] = "Failed to create an account from external credentials.";
-            return RedirectToAction(nameof(Login), new { returnUrl });
+            return View(model);
         }
 
         // ==========================================

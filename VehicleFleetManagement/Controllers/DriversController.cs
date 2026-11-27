@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Identity;
 using VehicleFleetManagement.Data;
 using VehicleFleetManagement.Models;
 using VehicleFleetManagement.Services.Interfaces;
@@ -23,16 +24,19 @@ namespace VehicleFleetManagement.Controllers
     {
         private readonly IDriverService _driverService;
         private readonly IDriverExperienceService _driverExperienceService;
+        private readonly UserManager<ApplicationUser> _userManager;
         private readonly IWebHostEnvironment _env;
         private const int PageSize = 6;
 
         public DriversController(
             IDriverService driverService,
             IDriverExperienceService driverExperienceService,
+            UserManager<ApplicationUser> userManager,
             IWebHostEnvironment env)
         {
             _driverService = driverService;
             _driverExperienceService = driverExperienceService;
+            _userManager = userManager;
             _env = env;
         }
 
@@ -316,6 +320,39 @@ namespace VehicleFleetManagement.Controllers
                 return View(driver);
             }
 
+            // Auto-provision Driver login account in Identity if email provided
+            if (!string.IsNullOrWhiteSpace(driver.Email))
+            {
+                var existingUser = await _userManager.FindByEmailAsync(driver.Email);
+                if (existingUser == null)
+                {
+                    existingUser = new ApplicationUser
+                    {
+                        UserName = driver.Email,
+                        Email = driver.Email,
+                        FullName = driver.FullName,
+                        PhoneNumber = driver.PhoneNumber,
+                        EmailConfirmed = true,
+                        CreatedAt = DateTime.UtcNow
+                    };
+
+                    var userResult = await _userManager.CreateAsync(existingUser, "Driver@123");
+                    if (userResult.Succeeded)
+                    {
+                        await _userManager.AddToRoleAsync(existingUser, DbSeeder.RoleDriver);
+                        driver.UserId = existingUser.Id;
+                    }
+                }
+                else
+                {
+                    if (!await _userManager.IsInRoleAsync(existingUser, DbSeeder.RoleDriver))
+                    {
+                        await _userManager.AddToRoleAsync(existingUser, DbSeeder.RoleDriver);
+                    }
+                    driver.UserId = existingUser.Id;
+                }
+            }
+
             var (success, message) = await _driverService.CreateDriverAsync(driver);
             if (!success)
             {
@@ -324,7 +361,7 @@ namespace VehicleFleetManagement.Controllers
                 return View(driver);
             }
 
-            TempData["Success"] = message;
+            TempData["Success"] = $"{message} Driver login account created: '{driver.Email}' (Password: 'Driver@123').";
             return RedirectToAction(nameof(Index));
         }
 

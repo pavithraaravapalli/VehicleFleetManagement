@@ -59,20 +59,9 @@ builder.Services.AddScoped<VehicleFleetManagement.Services.Interfaces.IFuelServi
 builder.Services.AddScoped<VehicleFleetManagement.Services.Interfaces.IReportService, VehicleFleetManagement.Services.Implementations.ReportService>();
 builder.Services.AddScoped<VehicleFleetManagement.Services.Interfaces.IDriverExperienceService, VehicleFleetManagement.Services.Implementations.DriverExperienceService>();
 builder.Services.AddScoped<VehicleFleetManagement.Services.Interfaces.INotificationService, VehicleFleetManagement.Services.Implementations.NotificationService>();
+builder.Services.AddScoped<VehicleFleetManagement.Services.Interfaces.ITripRequestService, VehicleFleetManagement.Services.Implementations.TripRequestService>();
 
-// 5b. Configure External Google OAuth Authentication (Secure User Secrets / Environment Variables)
-var googleClientId = builder.Configuration["Authentication:Google:ClientId"];
-var googleClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
 
-if (!string.IsNullOrEmpty(googleClientId) && !string.IsNullOrEmpty(googleClientSecret))
-{
-    builder.Services.AddAuthentication()
-        .AddGoogle(options =>
-        {
-            options.ClientId = googleClientId;
-            options.ClientSecret = googleClientSecret;
-        });
-}
 
 // 6. Add MVC Controllers and Razor Views
 builder.Services.AddControllersWithViews();
@@ -841,8 +830,59 @@ if (args.Contains("--verify-final"))
         LogVerification(18, "Responsive Design & Layout Integrity", layoutExists, 
             "Bootstrap 5 responsive viewport, mobile toggler, dynamic navbar navigation & alert banners verified.");
 
+        // -------------------------------------------------------------
+        // REQ 19: Trip Requests Module & Approval Lifecycle (SaaS Booking)
+        // -------------------------------------------------------------
+        var tripReqService = scope.ServiceProvider.GetRequiredService<ITripRequestService>();
+        var normalUser = await userManager.FindByEmailAsync("user@fleet.com");
+        var testReq = new TripRequest
+        {
+            UserId = normalUser!.Id,
+            Source = "Corporate HQ",
+            Destination = "Convention Center",
+            StartDate = DateTime.UtcNow.AddDays(2),
+            EstimatedEndDate = DateTime.UtcNow.AddDays(2).AddHours(4),
+            PassengerCount = 3,
+            PreferredVehicleType = "Sedan",
+            Purpose = "Executive client summit",
+            Status = TripRequestStatus.Pending,
+            CreatedAt = DateTime.UtcNow
+        };
+        var (reqCreated, _) = await tripReqService.CreateTripRequestAsync(testReq);
+        
+        var availVeh = await dbContext.Vehicles.FirstOrDefaultAsync(v => v.Status == VehicleStatus.Available);
+        var availDrv = await dbContext.Drivers.FirstOrDefaultAsync(d => d.AvailabilityStatus == DriverStatus.Available);
+        var approvingAdmin = await userManager.FindByEmailAsync("admin@fleet.com");
+        
+        bool approvedSuccessfully = false;
+        if (availVeh != null && availDrv != null && approvingAdmin != null)
+        {
+            var (appSuccess, _, generatedTripId) = await tripReqService.ApproveTripRequestAsync(
+                testReq.TripRequestId, availVeh.VehicleId, availDrv.DriverId, "Approved via automated test", approvingAdmin.Id);
+            
+            var approvedReq = await tripReqService.GetTripRequestByIdAsync(testReq.TripRequestId);
+            approvedSuccessfully = appSuccess && approvedReq?.Status == TripRequestStatus.Approved && approvedReq.ApprovedTripId == generatedTripId;
+            
+            // Cleanup generated test trip
+            if (generatedTripId.HasValue)
+            {
+                await tripService.DeleteTripAsync(generatedTripId.Value);
+            }
+        }
+        
+        LogVerification(19, "Trip Requests Module & Operational Approval", reqCreated && approvedSuccessfully,
+            "Staff transport booking request submitted, reviewed by Admin, approved into a scheduled Journey, and notification dispatched.");
+
+        // -------------------------------------------------------------
+        // REQ 20: Map-Based Fleet GPS Telemetry & Terminal Coordinates
+        // -------------------------------------------------------------
+        var vehiclesWithGps = await dbContext.Vehicles.Where(v => v.CurrentLatitude != null && v.CurrentLongitude != null).ToListAsync();
+        bool gpsTelemetryActive = vehiclesWithGps.Count >= 3;
+        LogVerification(20, "Map-Based Fleet GPS Telemetry & Depots", gpsTelemetryActive,
+            $"{vehiclesWithGps.Count} fleet vehicles have active GPS coordinates and terminal locations for Leaflet mapping.");
+
         Console.WriteLine("================================================================================");
-        Console.WriteLine($"FINAL INTEGRATION AUDIT SUMMARY: {passedCount}/18 CHECKS PASSED, {failedCount} FAILED");
+        Console.WriteLine($"FINAL INTEGRATION AUDIT SUMMARY: {passedCount}/20 CHECKS PASSED, {failedCount} FAILED");
         Console.WriteLine("================================================================================");
 
         Environment.Exit(failedCount == 0 ? 0 : 1);

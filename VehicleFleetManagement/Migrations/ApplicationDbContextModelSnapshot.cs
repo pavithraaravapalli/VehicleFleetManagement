@@ -596,6 +596,73 @@ namespace VehicleFleetManagement.Migrations
                     b.ToTable("Trips", (string)null);
                 });
 
+            modelBuilder.Entity("VehicleFleetManagement.Models.TripRequest", b =>
+                {
+                    b.Property<int>("TripRequestId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("TripRequestId"));
+
+                    b.Property<string>("AdminNotes")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int?>("ApprovedTripId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Destination")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime>("EstimatedEndDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("PassengerCount")
+                        .HasColumnType("int");
+
+                    b.Property<string>("PreferredVehicleType")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Purpose")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime?>("ReviewedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("nvarchar(25)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("TripRequestId");
+
+                    b.HasIndex("ApprovedTripId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("TripRequests", (string)null);
+                });
+
             modelBuilder.Entity("VehicleFleetManagement.Models.Vehicle", b =>
                 {
                     b.Property<int>("VehicleId")
@@ -606,6 +673,16 @@ namespace VehicleFleetManagement.Migrations
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
+
+                    b.Property<decimal?>("CurrentLatitude")
+                        .HasColumnType("decimal(9,6)");
+
+                    b.Property<string>("CurrentLocationName")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<decimal?>("CurrentLongitude")
+                        .HasColumnType("decimal(9,6)");
 
                     b.Property<decimal>("CurrentOdometer")
                         .HasPrecision(10, 2)
@@ -887,6 +964,24 @@ namespace VehicleFleetManagement.Migrations
                     b.Navigation("Vehicle");
                 });
 
+            modelBuilder.Entity("VehicleFleetManagement.Models.TripRequest", b =>
+                {
+                    b.HasOne("VehicleFleetManagement.Models.Trip", "ApprovedTrip")
+                        .WithMany()
+                        .HasForeignKey("ApprovedTripId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("VehicleFleetManagement.Models.ApplicationUser", "User")
+                        .WithMany("TripRequests")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ApprovedTrip");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("VehicleFleetManagement.Models.VehicleIssueReport", b =>
                 {
                     b.HasOne("VehicleFleetManagement.Models.Driver", "Driver")
@@ -920,6 +1015,8 @@ namespace VehicleFleetManagement.Migrations
                     b.Navigation("Notifications");
 
                     b.Navigation("ReviewsWritten");
+
+                    b.Navigation("TripRequests");
                 });
 
             modelBuilder.Entity("VehicleFleetManagement.Models.Driver", b =>

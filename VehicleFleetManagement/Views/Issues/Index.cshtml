@@ -156,10 +156,19 @@
                         else
                         {
                             <tr>
-                                <td colspan="9" class="text-center py-5 text-muted">
-                                    <i class="bi bi-shield-check display-6 d-block mb-2 text-success"></i>
-                                    <h6 class="fw-semibold text-dark">No fault reports match current filters</h6>
-                                    <p class="small text-muted mb-0">All fleet vehicles are currently operating without reported issues.</p>
+                                <td colspan="9" class="text-center py-5">
+                                    <div class="py-4">
+                                        <div class="avatar-placeholder mx-auto mb-3" style="width: 56px; height: 56px; background-color: var(--fleet-primary-light); color: var(--fleet-primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+                                            <i class="bi bi-shield-check text-success"></i>
+                                        </div>
+                                        <h6 class="fw-bold text-dark">No Vehicle Faults Reported</h6>
+                                        <p class="text-muted small mx-auto mb-3" style="max-width: 400px;">
+                                            All fleet vehicles are currently operating without reported mechanical or electrical issues.
+                                        </p>
+                                        <a asp-action="Create" class="btn btn-outline-danger btn-sm px-3 py-2">
+                                            <i class="bi bi-plus-circle me-1"></i> Report a Fault
+                                        </a>
+                                    </div>
                                 </td>
                             </tr>
                         }

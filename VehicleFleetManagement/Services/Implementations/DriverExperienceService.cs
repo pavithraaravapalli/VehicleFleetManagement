@@ -29,6 +29,23 @@ namespace VehicleFleetManagement.Services.Implementations
                 .Include(d => d.User)
                 .FirstOrDefaultAsync(d => d.UserId == userId);
 
+            // Auto-heal: If UserId is not linked, match by User's email
+            if (driver == null)
+            {
+                var user = await _context.Users.FindAsync(userId);
+                if (user != null && !string.IsNullOrWhiteSpace(user.Email))
+                {
+                    driver = await _context.Drivers
+                        .Include(d => d.User)
+                        .FirstOrDefaultAsync(d => d.Email.ToLower() == user.Email.ToLower());
+                    if (driver != null)
+                    {
+                        driver.UserId = userId;
+                        await _context.SaveChangesAsync();
+                    }
+                }
+            }
+
             if (driver == null) return null;
 
             var now = DateTime.UtcNow;
@@ -153,6 +170,25 @@ namespace VehicleFleetManagement.Services.Implementations
                 .Include(d => d.Reviews).ThenInclude(r => r.Trip)
                 .FirstOrDefaultAsync(d => d.UserId == userId);
 
+            // Auto-heal: If UserId is not linked, match by User's email
+            if (driver == null)
+            {
+                var user = await _context.Users.FindAsync(userId);
+                if (user != null && !string.IsNullOrWhiteSpace(user.Email))
+                {
+                    driver = await _context.Drivers
+                        .Include(d => d.User)
+                        .Include(d => d.Reviews).ThenInclude(r => r.ReviewerUser)
+                        .Include(d => d.Reviews).ThenInclude(r => r.Trip)
+                        .FirstOrDefaultAsync(d => d.Email.ToLower() == user.Email.ToLower());
+                    if (driver != null)
+                    {
+                        driver.UserId = userId;
+                        await _context.SaveChangesAsync();
+                    }
+                }
+            }
+
             if (driver == null) return null;
 
             return await BuildDriverProfileViewModelAsync(driver);
@@ -179,6 +215,60 @@ namespace VehicleFleetManagement.Services.Implementations
             int twoStar = visibleReviews.Count(r => r.Rating == 2);
             int oneStar = visibleReviews.Count(r => r.Rating == 1);
 
+            var totalDistance = completedTrips.Sum(t => t.Distance);
+            var completedCount = completedTrips.Count;
+            var criticalFaults = await _context.VehicleIssueReports
+                .CountAsync(i => i.DriverId == driver.DriverId && i.Severity == IssueSeverity.Critical);
+
+            var achievements = new List<DriverAchievement>
+            {
+                new DriverAchievement
+                {
+                    Title = "Safe Driver",
+                    Description = "Zero critical safety or mechanical defects reported during active journeys",
+                    Icon = "bi-shield-check",
+                    IsEarned = criticalFaults == 0,
+                    BadgeClass = criticalFaults == 0 ? "bg-primary" : "bg-light text-muted border",
+                    Progress = criticalFaults == 0 ? "Flawless Record" : $"{criticalFaults} issues reported"
+                },
+                new DriverAchievement
+                {
+                    Title = "Road Veteran",
+                    Description = "Completed 500+ kilometers of recorded fleet transit",
+                    Icon = "bi-speedometer2",
+                    IsEarned = totalDistance >= 500,
+                    BadgeClass = totalDistance >= 500 ? "bg-primary" : "bg-light text-muted border",
+                    Progress = $"{totalDistance:N0} / 500 km"
+                },
+                new DriverAchievement
+                {
+                    Title = "5-Star Elite",
+                    Description = "Maintained an exceptional customer rating of 4.8 or higher with verified reviews",
+                    Icon = "bi-star-fill",
+                    IsEarned = driver.Rating >= 4.8m && visibleReviews.Any(),
+                    BadgeClass = (driver.Rating >= 4.8m && visibleReviews.Any()) ? "bg-warning text-dark" : "bg-light text-muted border",
+                    Progress = $"{driver.Rating:F1} ★ ({visibleReviews.Count} reviews)"
+                },
+                new DriverAchievement
+                {
+                    Title = "Trip Master",
+                    Description = "Successfully executed 3 or more official fleet journeys",
+                    Icon = "bi-trophy-fill",
+                    IsEarned = completedCount >= 3,
+                    BadgeClass = completedCount >= 3 ? "bg-primary" : "bg-light text-muted border",
+                    Progress = $"{completedCount} / 3 journeys"
+                },
+                new DriverAchievement
+                {
+                    Title = "Compliant Professional",
+                    Description = "Commercial driving credentials verified and valid for over 6 months",
+                    Icon = "bi-patch-check-fill",
+                    IsEarned = driver.LicenseExpiryDate > DateTime.UtcNow.AddMonths(6),
+                    BadgeClass = driver.LicenseExpiryDate > DateTime.UtcNow.AddMonths(6) ? "bg-primary" : "bg-light text-muted border",
+                    Progress = $"Expires {driver.LicenseExpiryDate:MMM yyyy}"
+                }
+            };
+
             return new DriverProfileViewModel
             {
                 DriverId = driver.DriverId,
@@ -194,8 +284,8 @@ namespace VehicleFleetManagement.Services.Implementations
                 ProfilePictureUrl = driver.ProfilePictureUrl ?? driver.User?.ProfilePictureUrl,
                 Rating = driver.Rating > 0 ? driver.Rating : 5.0m,
                 TotalReviews = visibleReviews.Count,
-                CompletedTripsCount = completedTrips.Count,
-                TotalDistanceTravelled = completedTrips.Sum(t => t.Distance),
+                CompletedTripsCount = completedCount,
+                TotalDistanceTravelled = totalDistance,
                 CurrentlyAssignedVehicle = assignedVehicle,
 
                 FiveStarCount = fiveStar,
@@ -203,7 +293,8 @@ namespace VehicleFleetManagement.Services.Implementations
                 ThreeStarCount = threeStar,
                 TwoStarCount = twoStar,
                 OneStarCount = oneStar,
-                Reviews = visibleReviews
+                Reviews = visibleReviews,
+                Achievements = achievements
             };
         }
 

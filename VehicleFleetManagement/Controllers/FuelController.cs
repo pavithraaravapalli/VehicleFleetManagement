@@ -40,6 +40,7 @@ namespace VehicleFleetManagement.Controllers
         // GET: /Fuel
         // ==========================================
         [HttpGet]
+        [Authorize(Roles = DbSeeder.RoleAdmin)]
         public async Task<IActionResult> Index(int? vehicleId, DateTime? fromDate, DateTime? toDate, int page = 1)
         {
             var totalCount = await _fuelService.GetTotalCountAsync(vehicleId, fromDate, toDate);
@@ -85,6 +86,7 @@ namespace VehicleFleetManagement.Controllers
         // GET: /Fuel/Details/5
         // ==========================================
         [HttpGet]
+        [Authorize(Roles = $"{DbSeeder.RoleAdmin},{DbSeeder.RoleDriver}")]
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null) return BadRequest();
@@ -102,6 +104,7 @@ namespace VehicleFleetManagement.Controllers
         // GET: /Fuel/Create
         // ==========================================
         [HttpGet]
+        [Authorize(Roles = $"{DbSeeder.RoleAdmin},{DbSeeder.RoleDriver}")]
         public async Task<IActionResult> Create(int? vehicleId, int? tripId)
         {
             ViewBag.Title = "Record Fuel Purchase Receipt";
@@ -130,6 +133,7 @@ namespace VehicleFleetManagement.Controllers
         // POST: /Fuel/Create
         // ==========================================
         [HttpPost]
+        [Authorize(Roles = $"{DbSeeder.RoleAdmin},{DbSeeder.RoleDriver}")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(CreateFuelLogViewModel model)
         {

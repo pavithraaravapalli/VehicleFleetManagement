@@ -55,5 +55,9 @@ namespace VehicleFleetManagement.ViewModels
         public int AvailableDriversCount { get; set; }
         public int OnTripDriversCount { get; set; }
         public IEnumerable<VehicleIssueReport> RecentVehicleIssues { get; set; } = new List<VehicleIssueReport>();
+
+        // 9. Booking Requests Telemetry
+        public int PendingTripRequestsCount { get; set; }
+        public IEnumerable<TripRequest> RecentTripRequests { get; set; } = new List<TripRequest>();
     }
 }

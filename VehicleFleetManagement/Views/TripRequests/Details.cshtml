@@ -1,0 +1,135 @@
+@model VehicleFleetManagement.Models.TripRequest
+@{
+    ViewData["Title"] = $"Request #{Model.TripRequestId} Details";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+            <div class="d-flex align-items-center">
+                <a asp-action="Index" class="btn btn-outline-secondary btn-sm me-3">
+                    <i class="bi bi-arrow-left"></i>
+                </a>
+                <div>
+                    <h3 class="fw-bold mb-0 text-dark">
+                        Booking Request #@Model.TripRequestId
+                    </h3>
+                    <div class="text-muted small">Submitted on @Model.CreatedAt.ToString("MMM dd, yyyy HH:mm")</div>
+                </div>
+            </div>
+            <div>
+                @if (Model.Status == VehicleFleetManagement.Models.TripRequestStatus.Pending)
+                {
+                    <span class="badge bg-warning text-dark px-3 py-2 fs-6"><i class="bi bi-hourglass-split me-1"></i> Pending Review</span>
+                }
+                else if (Model.Status == VehicleFleetManagement.Models.TripRequestStatus.Approved)
+                {
+                    <span class="badge bg-primary px-3 py-2 fs-6"><i class="bi bi-check2-circle me-1"></i> Approved</span>
+                }
+                else if (Model.Status == VehicleFleetManagement.Models.TripRequestStatus.Rejected)
+                {
+                    <span class="badge bg-danger px-3 py-2 fs-6"><i class="bi bi-x-circle me-1"></i> Rejected</span>
+                }
+                else
+                {
+                    <span class="badge bg-secondary px-3 py-2 fs-6">@Model.Status</span>
+                }
+            </div>
+        </div>
+
+        <!-- Request Details Card -->
+        <div class="card-modern p-4 mb-4">
+            <h5 class="fw-bold text-dark mb-3">
+                <i class="bi bi-info-circle text-primary me-2"></i>Trip Specification
+            </h5>
+
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <div class="border rounded p-3 bg-light">
+                        <span class="text-muted small text-uppercase fw-semibold d-block">Origin / Pickup Location</span>
+                        <span class="fw-semibold text-dark fs-6"><i class="bi bi-geo-alt-fill text-danger me-1"></i>@Model.Source</span>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="border rounded p-3 bg-light">
+                        <span class="text-muted small text-uppercase fw-semibold d-block">Destination</span>
+                        <span class="fw-semibold text-dark fs-6"><i class="bi bi-flag-fill text-primary me-1"></i>@Model.Destination</span>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="border rounded p-3">
+                        <span class="text-muted small text-uppercase fw-semibold d-block">Scheduled Departure</span>
+                        <span class="fw-medium text-dark"><i class="bi bi-calendar-event me-1 text-secondary"></i>@Model.StartDate.ToString("MMM dd, yyyy HH:mm")</span>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="border rounded p-3">
+                        <span class="text-muted small text-uppercase fw-semibold d-block">Estimated Return</span>
+                        <span class="fw-medium text-dark"><i class="bi bi-calendar-check me-1 text-secondary"></i>@Model.EstimatedEndDate.ToString("MMM dd, yyyy HH:mm")</span>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="border rounded p-3">
+                        <span class="text-muted small text-uppercase fw-semibold d-block">Passenger Count</span>
+                        <span class="fw-medium text-dark"><i class="bi bi-people me-1 text-secondary"></i>@Model.PassengerCount People</span>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="border rounded p-3">
+                        <span class="text-muted small text-uppercase fw-semibold d-block">Preferred Vehicle Type</span>
+                        <span class="fw-medium text-dark"><i class="bi bi-truck me-1 text-secondary"></i>@(string.IsNullOrEmpty(Model.PreferredVehicleType) ? "Any" : Model.PreferredVehicleType)</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <span class="text-muted small text-uppercase fw-semibold d-block mb-1">Official Purpose & Justification</span>
+                <div class="p-3 bg-light rounded text-dark">
+                    @Model.Purpose
+                </div>
+            </div>
+
+            @if (!string.IsNullOrEmpty(Model.AdminNotes))
+            {
+                <div class="mt-4 pt-3 border-top">
+                    <span class="text-muted small text-uppercase fw-semibold d-block mb-1">Administrator Review Remarks</span>
+                    <div class="p-3 bg-light rounded text-dark border-start border-3 border-primary">
+                        @Model.AdminNotes
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Linked Trip Information (If Approved) -->
+        @if (Model.ApprovedTripId.HasValue && Model.ApprovedTrip != null)
+        {
+            <div class="card-modern p-4 mb-4 border-primary">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold text-dark mb-0">
+                        <i class="bi bi-signpost-2 text-primary me-2"></i>Generated Scheduled Trip
+                    </h5>
+                    <a asp-controller="Trips" asp-action="Details" asp-route-id="@Model.ApprovedTripId" class="btn btn-sm btn-primary" style="background-color: var(--fleet-primary); border-color: var(--fleet-primary);">
+                        Open Trip #@Model.ApprovedTripId.Value <i class="bi bi-arrow-right ms-1"></i>
+                    </a>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="p-3 border rounded bg-light">
+                            <span class="text-muted small text-uppercase fw-semibold d-block">Assigned Vehicle</span>
+                            <span class="fw-bold text-dark">@(Model.ApprovedTrip.Vehicle?.VehicleName ?? "Fleet Vehicle")</span>
+                            <div class="text-muted small">Reg: @(Model.ApprovedTrip.Vehicle?.RegistrationNumber ?? "N/A")</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 border rounded bg-light">
+                            <span class="text-muted small text-uppercase fw-semibold d-block">Assigned Driver</span>
+                            <span class="fw-bold text-dark">@(Model.ApprovedTrip.Driver?.FullName ?? "Assigned Driver")</span>
+                            <div class="text-muted small">Contact: @(Model.ApprovedTrip.Driver?.PhoneNumber ?? "N/A")</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>

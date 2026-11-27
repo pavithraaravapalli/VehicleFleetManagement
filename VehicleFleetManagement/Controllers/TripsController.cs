@@ -42,12 +42,21 @@ namespace VehicleFleetManagement.Controllers
         }
 
         // ==========================================
-        // GET: /Trips
+        // GET: /Trips (Admin Full Operational View)
         // ==========================================
         [HttpGet]
-        [Authorize(Roles = $"{DbSeeder.RoleAdmin},{DbSeeder.RoleUser}")]
         public async Task<IActionResult> Index(string? searchTerm, string? status, DateTime? fromDate, DateTime? toDate, int page = 1)
         {
+            // Redirect non-admin roles to their own dedicated trip experiences
+            if (User.IsInRole(DbSeeder.RoleDriver))
+            {
+                return RedirectToAction(nameof(MyTrips));
+            }
+            if (User.IsInRole(DbSeeder.RoleUser) && !User.IsInRole(DbSeeder.RoleAdmin))
+            {
+                return RedirectToAction(nameof(UserTrips));
+            }
+
             var totalCount = await _tripService.GetTotalTripsCountAsync(searchTerm, status, fromDate, toDate);
             var totalPages = (int)Math.Ceiling(totalCount / (double)PageSize);
             page = Math.Max(1, Math.Min(page, Math.Max(1, totalPages)));
@@ -67,6 +76,43 @@ namespace VehicleFleetManagement.Controllers
         }
 
         // ==========================================
+        // GET: /Trips/UserTrips (Staff Passenger My Trips)
+        // ==========================================
+        [HttpGet]
+        [Authorize(Roles = $"{DbSeeder.RoleUser},{DbSeeder.RoleAdmin}")]
+        public async Task<IActionResult> UserTrips(string? status)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return Challenge();
+
+            // Retrieve all trip IDs generated from this user's approved booking requests
+            var approvedTripIds = await _context.TripRequests
+                .Where(r => r.UserId == user.Id && r.ApprovedTripId.HasValue)
+                .Select(r => r.ApprovedTripId!.Value)
+                .Distinct()
+                .ToListAsync();
+
+            var query = _context.Trips
+                .Include(t => t.Vehicle)
+                .Include(t => t.Driver)
+                .Where(t => approvedTripIds.Contains(t.TripId));
+
+            if (!string.IsNullOrEmpty(status))
+            {
+                query = query.Where(t => t.TripStatus == status);
+            }
+
+            var trips = await query
+                .OrderByDescending(t => t.StartDate)
+                .ToListAsync();
+
+            ViewBag.SelectedStatus = status;
+            ViewBag.Title = "My Transport Journeys";
+
+            return View(trips);
+        }
+
+        // ==========================================
         // GET: /Trips/Details/5
         // ==========================================
         [HttpGet]
@@ -77,11 +123,26 @@ namespace VehicleFleetManagement.Controllers
             var trip = await _tripService.GetTripByIdAsync(id.Value);
             if (trip == null) return NotFound("Trip not found.");
 
-            // If user is a Driver, enforce self-isolation (Requirement 13)
-            if (User.IsInRole(DbSeeder.RoleDriver))
+            var currentUserId = _userManager.GetUserId(User);
+            var user = await _userManager.GetUserAsync(User);
+            var isAdmin = User.IsInRole(DbSeeder.RoleAdmin);
+
+            // Driver Data Isolation: Drivers can only view trips assigned to them
+            if (User.IsInRole(DbSeeder.RoleDriver) && !isAdmin)
             {
-                var userId = _userManager.GetUserId(User);
-                if (trip.Driver?.UserId != userId)
+                bool isAssigned = trip.Driver?.UserId == currentUserId || 
+                    (trip.Driver != null && user != null && string.Equals(trip.Driver.Email, user.Email, StringComparison.OrdinalIgnoreCase));
+                if (!isAssigned)
+                {
+                    return RedirectToAction("AccessDenied", "Account");
+                }
+            }
+
+            // User Data Isolation: Users can only view trips generated from their own booking requests
+            if (User.IsInRole(DbSeeder.RoleUser) && !isAdmin)
+            {
+                bool isUserTrip = await _context.TripRequests.AnyAsync(r => r.UserId == currentUserId && r.ApprovedTripId == trip.TripId);
+                if (!isUserTrip)
                 {
                     return RedirectToAction("AccessDenied", "Account");
                 }
@@ -155,6 +216,20 @@ namespace VehicleFleetManagement.Controllers
             var userId = _userManager.GetUserId(User);
             var driver = await _context.Drivers.FirstOrDefaultAsync(d => d.UserId == userId);
 
+            if (driver == null && !string.IsNullOrEmpty(userId))
+            {
+                var user = await _userManager.FindByIdAsync(userId);
+                if (user != null && !string.IsNullOrWhiteSpace(user.Email))
+                {
+                    driver = await _context.Drivers.FirstOrDefaultAsync(d => d.Email.ToLower() == user.Email.ToLower());
+                    if (driver != null)
+                    {
+                        driver.UserId = userId;
+                        await _context.SaveChangesAsync();
+                    }
+                }
+            }
+
             if (driver == null)
             {
                 return RedirectToAction("Driver", "Dashboard");
@@ -173,6 +248,7 @@ namespace VehicleFleetManagement.Controllers
         // GET: /Trips/Start/5
         // ==========================================
         [HttpGet]
+        [Authorize(Roles = $"{DbSeeder.RoleDriver},{DbSeeder.RoleAdmin}")]
         public async Task<IActionResult> Start(int? id)
         {
             if (id == null) return BadRequest();
@@ -183,9 +259,20 @@ namespace VehicleFleetManagement.Controllers
             var currentUserId = _userManager.GetUserId(User);
             var isAdmin = User.IsInRole(DbSeeder.RoleAdmin);
 
-            if (!isAdmin && trip.Driver?.UserId != currentUserId)
+            if (!isAdmin)
             {
-                return RedirectToAction("AccessDenied", "Account");
+                var user = await _userManager.GetUserAsync(User);
+                bool isAssigned = trip.Driver?.UserId == currentUserId || 
+                    (trip.Driver != null && user != null && string.Equals(trip.Driver.Email, user.Email, StringComparison.OrdinalIgnoreCase));
+                if (!isAssigned)
+                {
+                    return RedirectToAction("AccessDenied", "Account");
+                }
+                if (trip.Driver != null && trip.Driver.UserId != currentUserId && user != null)
+                {
+                    trip.Driver.UserId = currentUserId;
+                    await _context.SaveChangesAsync();
+                }
             }
 
             if (trip.TripStatus != TripStatusEnum.Scheduled)
@@ -212,6 +299,7 @@ namespace VehicleFleetManagement.Controllers
         // POST: /Trips/Start/5
         // ==========================================
         [HttpPost]
+        [Authorize(Roles = $"{DbSeeder.RoleDriver},{DbSeeder.RoleAdmin}")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Start(StartTripViewModel model)
         {
@@ -240,6 +328,7 @@ namespace VehicleFleetManagement.Controllers
         // GET: /Trips/Complete/5
         // ==========================================
         [HttpGet]
+        [Authorize(Roles = $"{DbSeeder.RoleDriver},{DbSeeder.RoleAdmin}")]
         public async Task<IActionResult> Complete(int? id)
         {
             if (id == null) return BadRequest();
@@ -250,9 +339,20 @@ namespace VehicleFleetManagement.Controllers
             var currentUserId = _userManager.GetUserId(User);
             var isAdmin = User.IsInRole(DbSeeder.RoleAdmin);
 
-            if (!isAdmin && trip.Driver?.UserId != currentUserId)
+            if (!isAdmin)
             {
-                return RedirectToAction("AccessDenied", "Account");
+                var user = await _userManager.GetUserAsync(User);
+                bool isAssigned = trip.Driver?.UserId == currentUserId || 
+                    (trip.Driver != null && user != null && string.Equals(trip.Driver.Email, user.Email, StringComparison.OrdinalIgnoreCase));
+                if (!isAssigned)
+                {
+                    return RedirectToAction("AccessDenied", "Account");
+                }
+                if (trip.Driver != null && trip.Driver.UserId != currentUserId && user != null)
+                {
+                    trip.Driver.UserId = currentUserId;
+                    await _context.SaveChangesAsync();
+                }
             }
 
             if (trip.TripStatus != TripStatusEnum.InProgress)
@@ -281,6 +381,7 @@ namespace VehicleFleetManagement.Controllers
         // POST: /Trips/Complete/5
         // ==========================================
         [HttpPost]
+        [Authorize(Roles = $"{DbSeeder.RoleDriver},{DbSeeder.RoleAdmin}")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Complete(CompleteTripViewModel model)
         {

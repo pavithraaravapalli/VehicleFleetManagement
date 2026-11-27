@@ -80,6 +80,12 @@ namespace VehicleFleetManagement.Controllers
             dashboardData.OpenVehicleIssuesCount = await _context.VehicleIssueReports.CountAsync(i => i.Status == IssueStatus.Open || i.Status == IssueStatus.UnderReview);
             dashboardData.AvailableDriversCount = await _context.Drivers.CountAsync(d => d.AvailabilityStatus == DriverStatus.Available);
             dashboardData.OnTripDriversCount = await _context.Drivers.CountAsync(d => d.AvailabilityStatus == DriverStatus.OnTrip);
+            dashboardData.PendingTripRequestsCount = await _context.TripRequests.CountAsync(r => r.Status == TripRequestStatus.Pending);
+            dashboardData.RecentTripRequests = await _context.TripRequests
+                .Include(r => r.User)
+                .OrderByDescending(r => r.CreatedAt)
+                .Take(5)
+                .ToListAsync();
             dashboardData.RecentVehicleIssues = await _context.VehicleIssueReports
                 .Include(i => i.Vehicle)
                 .Include(i => i.Driver)
@@ -90,6 +96,7 @@ namespace VehicleFleetManagement.Controllers
             ViewBag.OpenVehicleIssuesCount = dashboardData.OpenVehicleIssuesCount;
             ViewBag.AvailableDriversCount = dashboardData.AvailableDriversCount;
             ViewBag.OnTripDriversCount = dashboardData.OnTripDriversCount;
+            ViewBag.PendingTripRequestsCount = dashboardData.PendingTripRequestsCount;
             ViewBag.RecentIssues = dashboardData.RecentVehicleIssues;
 
             // Run automated proactive fleet check (maintenance & license expiries)
@@ -137,7 +144,7 @@ namespace VehicleFleetManagement.Controllers
         [ActionName("User")]
         public async Task<IActionResult> UserDashboard()
         {
-            ViewBag.Title = "Staff Workspace - FleetFlow Pro";
+            ViewBag.Title = "Staff Transportation Workspace - FleetFlow Pro";
 
             var user = await _userManager.GetUserAsync(HttpContext.User);
             if (user == null)
@@ -145,41 +152,73 @@ namespace VehicleFleetManagement.Controllers
                 return RedirectToAction("Login", "Account");
             }
 
+            // User's own transport requests
+            var myRequests = await _context.TripRequests
+                .Include(r => r.ApprovedTrip).ThenInclude(t => t!.Vehicle)
+                .Include(r => r.ApprovedTrip).ThenInclude(t => t!.Driver)
+                .Where(r => r.UserId == user.Id)
+                .OrderByDescending(r => r.CreatedAt)
+                .ToListAsync();
+
+            // Trip IDs attached to this user's approved requests
+            var approvedTripIds = myRequests
+                .Where(r => r.ApprovedTripId.HasValue)
+                .Select(r => r.ApprovedTripId!.Value)
+                .Distinct()
+                .ToList();
+
+            // User's scheduled and completed journeys
+            var myJourneys = await _context.Trips
+                .Include(t => t.Vehicle)
+                .Include(t => t.Driver)
+                .Where(t => approvedTripIds.Contains(t.TripId))
+                .ToListAsync();
+
+            var upcomingTrips = myJourneys
+                .Where(t => t.TripStatus == TripStatusEnum.Scheduled || t.TripStatus == TripStatusEnum.InProgress)
+                .OrderBy(t => t.StartDate)
+                .Take(5)
+                .ToList();
+
+            var completedTrips = myJourneys
+                .Where(t => t.TripStatus == TripStatusEnum.Completed)
+                .OrderByDescending(t => t.ActualEndDate ?? t.StartDate)
+                .Take(5)
+                .ToList();
+
+            var notifications = await _context.Notifications
+                .Where(n => n.UserId == user.Id)
+                .OrderByDescending(n => n.CreatedAt)
+                .Take(5)
+                .ToListAsync();
+
+            var reviews = await _context.DriverReviews
+                .Include(r => r.Driver)
+                .Include(r => r.Trip)
+                .Where(r => r.ReviewerUserId == user.Id)
+                .OrderByDescending(r => r.ReviewDate)
+                .Take(4)
+                .ToListAsync();
+
             var viewModel = new UserDashboardViewModel
             {
                 UserId = user.Id,
-                FullName = string.IsNullOrWhiteSpace(user.FullName) ? (user.UserName ?? "User") : user.FullName,
+                FullName = string.IsNullOrWhiteSpace(user.FullName) ? (user.UserName ?? "Staff Member") : user.FullName,
                 Email = user.Email ?? string.Empty,
                 PhoneNumber = user.PhoneNumber,
                 ProfilePictureUrl = user.ProfilePictureUrl,
                 MemberSince = user.CreatedAt,
-                AvailableVehiclesCount = await _context.Vehicles.CountAsync(v => v.Status == VehicleStatus.Available),
-                ActiveTripsCount = await _context.Trips.CountAsync(t => t.TripStatus == TripStatusEnum.Scheduled || t.TripStatus == TripStatusEnum.InProgress),
+                PendingRequestsCount = myRequests.Count(r => r.Status == TripRequestStatus.Pending),
+                ApprovedRequestsCount = myRequests.Count(r => r.Status == TripRequestStatus.Approved),
+                UpcomingTripsCount = upcomingTrips.Count,
+                CompletedTripsCount = completedTrips.Count,
                 UnreadNotificationsCount = await _context.Notifications.CountAsync(n => n.UserId == user.Id && !n.IsRead),
-                TotalReviewsWrittenCount = await _context.DriverReviews.CountAsync(r => r.ReviewerUserId == user.Id),
-                AvailableVehicles = await _context.Vehicles
-                    .Where(v => v.Status == VehicleStatus.Available)
-                    .OrderBy(v => v.VehicleName)
-                    .Take(6)
-                    .ToListAsync(),
-                RecentTrips = await _context.Trips
-                    .Include(t => t.Vehicle)
-                    .Include(t => t.Driver)
-                    .OrderByDescending(t => t.StartDate)
-                    .Take(5)
-                    .ToListAsync(),
-                RecentNotifications = await _context.Notifications
-                    .Where(n => n.UserId == user.Id)
-                    .OrderByDescending(n => n.CreatedAt)
-                    .Take(5)
-                    .ToListAsync(),
-                MyRecentReviews = await _context.DriverReviews
-                    .Include(r => r.Driver)
-                    .Include(r => r.Trip)
-                    .Where(r => r.ReviewerUserId == user.Id)
-                    .OrderByDescending(r => r.ReviewDate)
-                    .Take(4)
-                    .ToListAsync()
+                TotalReviewsWrittenCount = reviews.Count,
+                MyBookingRequests = myRequests.Take(5).ToList(),
+                MyUpcomingTrips = upcomingTrips,
+                MyCompletedTrips = completedTrips,
+                RecentNotifications = notifications,
+                MyRecentReviews = reviews
             };
 
             return View(viewModel);
